@@ -9,6 +9,6 @@ public class Farcry2EditorTarget : TargetRules
 	{
 		Type = TargetType.Editor;
 		DefaultBuildSettings = BuildSettingsVersion.V2;
-		ExtraModuleNames.Add("Farcry2");
+		ExtraModuleNames.AddRange(new string[] { "Farcry2" });
 	}
 }
