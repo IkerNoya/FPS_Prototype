@@ -24,6 +24,6 @@ class FARCRY2_API IInteractionInterface
 public:
 	
 	UFUNCTION()
-	virtual void HandleInteraction() {}
+	virtual void HandleInteraction(class ACharacterBase* InteractionInstigator);
 	
 };

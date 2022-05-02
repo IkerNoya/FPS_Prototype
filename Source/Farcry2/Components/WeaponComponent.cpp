@@ -3,32 +3,72 @@
 
 #include "Components/WeaponComponent.h"
 
+#include "Farcry2Projectile.h"
+#include "Characters/CharacterBase.h"
+#include "Kismet/GameplayStatics.h"
+
 // Sets default values for this component's properties
 UWeaponComponent::UWeaponComponent()
 {
-	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
-	// off to improve performance if you don't need them.
-	PrimaryComponentTick.bCanEverTick = true;
+	PrimaryComponentTick.bCanEverTick = false;
 
-	// ...
+	MuzzleOffset = FVector(100.f, 0.f, 10.f);
 }
 
-
-// Called when the game starts
-void UWeaponComponent::BeginPlay()
+void UWeaponComponent::AttachWeapon(ACharacterBase* TargetCharacter)
 {
-	Super::BeginPlay();
-
-	// ...
-	
+	Character = TargetCharacter;
+	if(Character)
+	{
+		FAttachmentTransformRules AttachmentRules(EAttachmentRule::SnapToTarget, true);
+		GetOwner()->AttachToComponent(Character->GetMesh1P(), AttachmentRules, FName(TEXT("GripPoint")));
+		Character->OnItemAction.AddDynamic(this, &UWeaponComponent::Fire);
+	}
 }
 
-
-// Called every frame
-void UWeaponComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+void UWeaponComponent::Fire()
 {
-	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+	if(!Character || !Character->GetController()) return;
 
-	// ...
+	if(ProjectileClass != nullptr)
+	{
+		UWorld* const World = GetWorld();
+		if(World)
+		{
+			APlayerController* PlayerController = Cast<APlayerController>(Character->GetController());
+			const FRotator SpawnRotation = PlayerController->PlayerCameraManager->GetCameraRotation();
+			const FVector SpawnLocation = GetOwner()->GetActorLocation() + SpawnRotation.RotateVector(MuzzleOffset);
+			
+			FActorSpawnParameters ActorSpawnParameters;
+			ActorSpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
+			
+			World->SpawnActor<AFarcry2Projectile>(ProjectileClass, SpawnLocation, SpawnRotation, ActorSpawnParameters);
+		}
+	}
+
+	if(FireSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, FireSound, Character->GetActorLocation());
+	}
+
+	if(FireAnimation)
+	{
+		if(auto* AnimInstance = Character->GetMesh1P()->GetAnimInstance())
+		{
+			AnimInstance->Montage_Play(FireAnimation, 1.f);
+		}
+	}
 }
+
+void UWeaponComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	if(Character)
+	{
+		// Unregister from the OnUseItem Event
+		Character->OnItemAction.RemoveDynamic(this, &UWeaponComponent::Fire);
+	}
+}
+
+
+
 
