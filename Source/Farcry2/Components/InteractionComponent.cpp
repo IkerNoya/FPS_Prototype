@@ -5,7 +5,7 @@
 
 #include "Characters/CharacterBase.h"
 
-#define ECC_Interactable          ECC_GameTraceChannel1
+#define ECC_Interactable          ECC_GameTraceChannel3
 
 UInteractionComponent::UInteractionComponent()
 {
@@ -27,6 +27,7 @@ void UInteractionComponent::Interact()
 	FindPlayerRotationAndLocation();
 	FCollisionQueryParams TraceParams(FName(TEXT("")), false, GetOwner());
 	FCollisionObjectQueryParams ObjectParams = FCollisionObjectQueryParams(ECC_TO_BITFIELD(ECC_Interactable));
+	DrawDebugLine(GetWorld(), PlayerLocation, CalculateLineTraceEnd(), FColor::Red, false, 5);
 	if(GetWorld()->LineTraceSingleByObjectType(Hit, PlayerLocation, CalculateLineTraceEnd(), ObjectParams, TraceParams))
 	{
 		AActor* Actor = Hit.GetActor();
@@ -57,7 +58,6 @@ void UInteractionComponent::FindPlayerRotationAndLocation()
 	{
 		if(auto* Controller = Cast<APlayerController>(Character->GetController()))
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Found player controller"));
 			Controller->GetPlayerViewPoint(PlayerLocation, PlayerRotation);
 		}
 	}
