@@ -3,6 +3,8 @@
 
 #include "Weapons/WeaponBase.h"
 
+#include "Components/SkeletalMeshComponent.h"
+
 // Sets default values
 AWeaponBase::AWeaponBase()
 {
@@ -15,9 +17,9 @@ AWeaponBase::AWeaponBase()
 	WeaponComponent = CreateDefaultSubobject<UWeaponComponent>(TEXT("Weapon Component"));
 }
 
-void AWeaponBase::HandleInteraction(ACharacterBase* InteractionInstigator)
+void AWeaponBase::HandleInteraction_Implementation(ACharacterBase* InteractionInstigator)
 {
-	IInteractionInterface::HandleInteraction(InteractionInstigator);
+	IInteractionInterface::HandleInteraction_Implementation(InteractionInstigator);
 	if(InteractionInstigator)
 	{
 		OnWeaponPickup.Broadcast(InteractionInstigator);

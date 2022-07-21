@@ -3,7 +3,7 @@
 
 #include "Item.h"
 
-void AItemBase::HandleInteraction(ACharacterBase* InteractionInstigator)
+void AItemBase::HandleInteraction_Implementation(ACharacterBase* InteractionInstigator)
 {
-	IInteractionInterface::HandleInteraction(InteractionInstigator);
+	IInteractionInterface::HandleInteraction_Implementation(InteractionInstigator);
 }

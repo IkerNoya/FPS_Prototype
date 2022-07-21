@@ -31,6 +31,6 @@ public:
 	UPROPERTY(BlueprintAssignable, Category = "Interaction")
 	FOnWeaponPickup OnWeaponPickup;
 protected:
-	virtual void HandleInteraction(ACharacterBase* InteractionInstigator) override;
+	virtual void HandleInteraction_Implementation(ACharacterBase* InteractionInstigator) override;
 
 };

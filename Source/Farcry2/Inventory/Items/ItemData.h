@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Engine/DataAsset.h"
+#include "Materials/MaterialInterface.h"
 #include "ItemData.generated.h"
 
 
@@ -13,13 +14,11 @@ enum class EItemType : uint8
 	Consumable, Equippable
 };
 USTRUCT(BlueprintType)
-struct FARCRY2_API FItem
+struct FARCRY2_API FItemInfo
 {
 	GENERATED_BODY()
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 Width =  1;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	int32 Height = 1;
+	FIntPoint Dimensions =  FIntPoint::ZeroValue;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
 	EItemType Type;
 };
@@ -30,5 +29,13 @@ class FARCRY2_API UItemData : public UPrimaryDataAsset
 	GENERATED_BODY()
 	public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
-	FItem Item;
+	FItemInfo Item;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
+	UMaterialInterface* Icon;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
+	UMaterialInterface* IconRotated;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
+	TSubclassOf<class AItemBase> ItemClass;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Item")
+	bool bIsRotated;
 };

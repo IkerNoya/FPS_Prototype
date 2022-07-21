@@ -24,7 +24,7 @@ class FARCRY2_API UInventoryComponent : public UActorComponent
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory")
-	TArray<FSlot> Slots;
+	TArray<UItemData*> Items;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory")
 	int32 Columns = 8;

@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "GameFramework/Actor.h"
 #include "Interfaces/InteractionInterface.h"
 #include "Items/ItemData.h"
 #include "Item.generated.h"
@@ -17,5 +18,5 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
 	UItemData* ItemData;
 public:
-	virtual void HandleInteraction(ACharacterBase* InteractionInstigator) override;
+	virtual void HandleInteraction_Implementation(ACharacterBase* InteractionInstigator) override;
 };

@@ -5,7 +5,6 @@
 #include "CoreMinimal.h"
 #include "Components/InteractionComponent.h"
 #include "GameFramework/Character.h"
-#include "Interfaces/InteractionInterface.h"
 #include "CharacterBase.generated.h"
 
 class USceneComponent;
