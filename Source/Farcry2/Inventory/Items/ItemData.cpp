@@ -5,3 +5,7 @@
 #include "Inventory/Item.h"
 
 
+UMaterialInterface* UItemData::GetIcon() const
+{
+	return bIsRotated ? IconRotated : Icon;
+}

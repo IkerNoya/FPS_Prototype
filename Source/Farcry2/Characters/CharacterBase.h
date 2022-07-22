@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/InteractionComponent.h"
+#include "Components/InventoryComponent.h"
 #include "GameFramework/Character.h"
 #include "CharacterBase.generated.h"
 
@@ -25,6 +26,8 @@ protected:
 	UCameraComponent* Camera;
 	UPROPERTY(EditDefaultsOnly, Category = "Components|Custom")
 	UInteractionComponent* InteractionComponent;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components | Custom")
+	UInventoryComponent* Inventory;
 	
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Camera")

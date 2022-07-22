@@ -4,32 +4,53 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
-#include "Inventory/Items/ItemData.h"
+#include "Inventory/Items/ItemObject.h"
+// #include "Inventory/Items/ItemData.h"
 #include "InventoryComponent.generated.h"
 
 USTRUCT(BlueprintType)
 struct FSlot
 {
 	GENERATED_BODY()
+	FSlot(int32 X, int32 Y)
+	{
+		TileX = X;
+		TileY = Y;
+	}
+	FSlot()
+	{
+		TileX = 0;
+		TileY = 0;
+	}
 	UPROPERTY(EditAnywhere, BlueprintReadWrite)
-	UItemData* Item = nullptr;
+	int32 TileX;
 	UPROPERTY(VisibleAnywhere, BlueprintReadWrite)
-	bool bIsUsed = false;
+	int32 TileY;;
 };
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInventoryChange);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent), Blueprintable)
 class FARCRY2_API UInventoryComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
+
 protected:
+	UPROPERTY(BlueprintReadWrite)
+	bool bIsDirty = false;
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory")
-	TArray<UItemData*> Items;
+	TArray<UItemObject*> Items;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory")
 	int32 Columns = 8;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory")
 	int32 Rows = 8;
+
+public:
+	UPROPERTY(BlueprintAssignable)
+	FOnInventoryChange OnInventoryChange;
 	
 public:
 	// Sets default values for this component's properties
@@ -45,7 +66,26 @@ public:
 	                           FActorComponentTickFunction* ThisTickFunction) override;
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
+	FSlot IndexToTile(int32 Index);
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	int32 TileToIndex(FSlot Tile);
+	UFUNCTION(BlueprintCallable)
+	TMap<UItemObject*, FSlot> GetAllItems();
+	UFUNCTION(BlueprintCallable)
+	bool IsRoomAvailable(UItemObject* Item, int32 TopLeftIndex);
+	UFUNCTION(BlueprintCallable)
+	bool TryAddItem(UItemObject* NewItem);
+	UFUNCTION(BlueprintCallable)
+	void RemoveItem(UItemObject* Item);
+		
+	
+	UFUNCTION(BlueprintCallable, BlueprintPure)
 	FORCEINLINE int32  GetColumns() const {return Columns;}
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	FORCEINLINE int32 GetRows() const {return Rows;}
+
+private:
+	void AddItemAt(UItemObject* NewItem, int32 TopLeftIndex);
+	bool  GetItemAtIndex(int32 Index, UItemObject*& ItemFound);
+	bool IsTileValid(FSlot Tile);
 };

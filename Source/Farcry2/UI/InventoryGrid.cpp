@@ -36,4 +36,10 @@ void UInventoryGrid::InitializeGrid(UInventoryComponent* InventoryComponent, flo
 	SlotSize = Size;
 	SetGridSize();
 	CreateLineSegments();
+	Refresh();
+	ReceiveInventoryChangeMessage();
+}
+
+void UInventoryGrid::Refresh_Implementation()
+{
 }

@@ -42,4 +42,8 @@ private:
 public:
 	UFUNCTION(BlueprintCallable)
 	void InitializeGrid(UInventoryComponent* InventoryComponent, float Size);
+	UFUNCTION(BlueprintNativeEvent)
+	void Refresh();
+	UFUNCTION(BlueprintImplementableEvent)
+	void ReceiveInventoryChangeMessage();
 };
