@@ -15,7 +15,7 @@ class FARCRY2_API AItemBase : public AActor, public IInteractionInterface
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
 	UStaticMeshComponent* Mesh;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Settings", meta = (ExposeOnSpawn))
 	UItemObject* ItemData;
 public:
 	virtual void HandleInteraction_Implementation(ACharacterBase* InteractionInstigator) override;
