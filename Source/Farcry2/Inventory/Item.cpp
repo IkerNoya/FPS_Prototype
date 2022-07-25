@@ -11,12 +11,6 @@ void AItemBase::HandleInteraction_Implementation(ACharacterBase* InteractionInst
 	IInteractionInterface::HandleInteraction_Implementation(InteractionInstigator);
 	if(auto* Inventory = Cast<UInventoryComponent>(InteractionInstigator->FindComponentByClass(UInventoryComponent::StaticClass())))
 	{
-
-		if(!ItemData)
-		{
-			UE_LOG(LogTemp, Warning, TEXT("HOLA PERRI2"))
-			
-		}
 		if(Inventory->TryAddItem(ItemData))
 		{
 			Destroy();

@@ -4,12 +4,8 @@
 
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
-#include "Components/CanvasPanelSlot.h"
 #include "InventoryGrid.generated.h"
 
-/**
- * 
- */
 USTRUCT(BlueprintType)
 struct FGridLines
 {
@@ -18,6 +14,26 @@ struct FGridLines
 	FVector2D Start = FVector2D::Zero();
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
 	FVector2D End = FVector2D::Zero();
+};
+
+USTRUCT(BlueprintType)
+struct FGridSize
+{
+	GENERATED_BODY()
+	FGridSize()
+	{
+		SizeX = 0;
+		SizeY = 0;
+	}
+	FGridSize(float X, float Y)
+	{
+		SizeX = X;
+		SizeY = Y;
+	}
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float SizeX;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	float SizeY;
 };
 
 UCLASS()
@@ -35,6 +51,8 @@ protected:
 	
 	UFUNCTION(BlueprintImplementableEvent)
 	void SetGridSize();
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	FGridSize CalculateGridSize();
 
 private:
 	void CreateLineSegments();
@@ -42,8 +60,7 @@ private:
 public:
 	UFUNCTION(BlueprintCallable)
 	void InitializeGrid(UInventoryComponent* InventoryComponent, float Size);
-	UFUNCTION(BlueprintNativeEvent)
-	void Refresh();
+	
 	UFUNCTION(BlueprintImplementableEvent)
-	void ReceiveInventoryChangeMessage();
+	void Refresh();
 };

@@ -2,8 +2,8 @@
 
 
 #include "UI/InventoryGrid.h"
-
 #include "Components/InventoryComponent.h"
+
 
 void UInventoryGrid::CreateLineSegments()
 {
@@ -30,6 +30,13 @@ void UInventoryGrid::CreateLineSegments()
 	}
 }
 
+FGridSize UInventoryGrid::CalculateGridSize()
+{
+	if(!Inventory) return FGridSize();
+	
+	return FGridSize(SlotSize * Inventory->GetColumns(), SlotSize * Inventory->GetRows());
+}
+
 void UInventoryGrid::InitializeGrid(UInventoryComponent* InventoryComponent, float Size)
 {
 	Inventory = InventoryComponent;
@@ -37,9 +44,6 @@ void UInventoryGrid::InitializeGrid(UInventoryComponent* InventoryComponent, flo
 	SetGridSize();
 	CreateLineSegments();
 	Refresh();
-	ReceiveInventoryChangeMessage();
+	Inventory->OnInventoryChange.AddDynamic(this, &UInventoryGrid::Refresh);
 }
 
-void UInventoryGrid::Refresh_Implementation()
-{
-}
