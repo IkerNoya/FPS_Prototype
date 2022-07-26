@@ -79,6 +79,7 @@ bool UInventoryComponent::IsRoomAvailable(UItemObject* Item, int32 TopLeftIndex)
 bool UInventoryComponent::TryAddItem(UItemObject* NewItem)
 {
 	if(!IsValid(NewItem)) return false;
+	bool bWasRotated = false;
 	for(int32 i = 0; i < Items.Num(); i++)
 	{
 		if(IsRoomAvailable(NewItem, i))
@@ -87,7 +88,16 @@ bool UInventoryComponent::TryAddItem(UItemObject* NewItem)
 			return true;
 		}
 	}
-	return true;
+	NewItem->Rotate();
+	for(int32 i = 0; i < Items.Num(); i++)
+	{
+		if(IsRoomAvailable(NewItem, i))
+		{
+			AddItemAt(NewItem, i);
+			return true;
+		}
+	}
+	return false;
 }
 
 void UInventoryComponent::RemoveItem(UItemObject* Item)
