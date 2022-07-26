@@ -29,4 +29,10 @@ public:
 	
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Item|Icon")
 	UMaterialInterface* GetIcon() const;
+	UFUNCTION(BlueprintCallable, Category = "Item")
+	void Rotate();
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Item")
+	FORCEINLINE bool IsRotated() const  { return bIsRotated; }
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Item")
+	FIntPoint GetDimensions();
 };

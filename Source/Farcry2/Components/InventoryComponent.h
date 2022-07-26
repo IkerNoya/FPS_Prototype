@@ -77,6 +77,8 @@ public:
 	bool TryAddItem(UItemObject* NewItem);
 	UFUNCTION(BlueprintCallable)
 	void RemoveItem(UItemObject* Item);
+	UFUNCTION(BlueprintCallable)
+	void AddItemAt(UItemObject* NewItem, int32 TopLeftIndex);
 		
 	
 	UFUNCTION(BlueprintCallable, BlueprintPure)
@@ -85,7 +87,6 @@ public:
 	FORCEINLINE int32 GetRows() const {return Rows;}
 
 private:
-	void AddItemAt(UItemObject* NewItem, int32 TopLeftIndex);
 	bool  GetItemAtIndex(int32 Index, UItemObject*& ItemFound);
 	bool IsTileValid(FSlot Tile);
 };

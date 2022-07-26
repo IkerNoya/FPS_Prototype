@@ -22,13 +22,6 @@ void UInventoryComponent::TickComponent(float DeltaTime, ELevelTick TickType,
                                         FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-	// for(int i = 0; i < Items.Num(); i++)
-	// {
-	// 	if(Items[i])
-	// 	{
-	// 		UE_LOG(LogTemp, Warning, TEXT("Valid Item At: %d"), i);
-	// 	}
-	// }
 	if(bIsDirty)
 	{
 		bIsDirty=false;
@@ -65,8 +58,8 @@ TMap<UItemObject*, FSlot> UInventoryComponent::GetAllItems()
 bool UInventoryComponent::IsRoomAvailable(UItemObject* Item, int32 TopLeftIndex)
 {
 	FSlot Slot = IndexToTile(TopLeftIndex);
-	int32 LastXIndex = Slot.TileX + (Item->Item.Dimensions.X - 1);
-	int32 LastYIndex = Slot.TileY + (Item->Item.Dimensions.Y - 1);
+	int32 LastXIndex = Slot.TileX + (Item->GetDimensions().X - 1);
+	int32 LastYIndex = Slot.TileY + (Item->GetDimensions().Y - 1);
 	for(int32 X = Slot.TileX; X <= LastXIndex; X++)
 	{
 		for(int32 Y = Slot.TileY; Y <= LastYIndex; Y++)
@@ -115,8 +108,8 @@ void UInventoryComponent::RemoveItem(UItemObject* Item)
 void UInventoryComponent::AddItemAt(UItemObject* NewItem, int32 TopLeftIndex)
 {
 	FSlot Slot = IndexToTile(TopLeftIndex);
-	int32 LastXIndex = Slot.TileX + (NewItem->Item.Dimensions.X - 1);
-	int32 LastYIndex = Slot.TileY + (NewItem->Item.Dimensions.Y - 1);
+	int32 LastXIndex = Slot.TileX + (NewItem->GetDimensions().X - 1);
+	int32 LastYIndex = Slot.TileY + (NewItem->GetDimensions().Y - 1);
 	for(int32 X = Slot.TileX; X <= LastXIndex; X++)
 	{
 		for(int32 Y = Slot.TileY; Y <= LastYIndex; Y++)
