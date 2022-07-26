@@ -99,6 +99,17 @@ bool UInventoryComponent::TryAddItem(UItemObject* NewItem)
 
 void UInventoryComponent::RemoveItem(UItemObject* Item)
 {
+	if(IsValid(Item))
+	{
+		for(int i = 0; i < Items.Num(); i++)
+		{
+			if(Items[i] == Item)
+			{
+				Items[i] = nullptr;
+				bIsDirty=true;
+			}
+		}
+	}
 }
 
 void UInventoryComponent::AddItemAt(UItemObject* NewItem, int32 TopLeftIndex)
