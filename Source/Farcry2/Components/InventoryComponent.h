@@ -42,6 +42,12 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory")
 	TArray<UItemObject*> Items;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory")
+	TMap<int32, UItemObject*> WeaponSlots;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory")
+	TMap<int32, UItemObject*> Pockets;
+
+	
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory")
 	int32 Columns = 8;
@@ -79,12 +85,19 @@ public:
 	void RemoveItem(UItemObject* Item);
 	UFUNCTION(BlueprintCallable)
 	void AddItemAt(UItemObject* NewItem, int32 TopLeftIndex);
-		
+	UFUNCTION(BlueprintCallable)
+	void SetWeaponInSlot(int32 Slot, UItemObject* Weapon);
+	UFUNCTION(BlueprintCallable)
+	void SetItemInPocket(int32 Slot, UItemObject* Item);
 	
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	FORCEINLINE int32  GetColumns() const {return Columns;}
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	FORCEINLINE int32 GetRows() const {return Rows;}
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	FORCEINLINE UItemObject* GetItemInWeaponSlot(int32 Slot) const { return WeaponSlots[Slot]; }
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	FORCEINLINE UItemObject* GetItemInPockets(int32 Slot) const { return Pockets[Slot]; }
 
 private:
 	bool  GetItemAtIndex(int32 Index, UItemObject*& ItemFound);

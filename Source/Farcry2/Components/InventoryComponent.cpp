@@ -130,6 +130,22 @@ void UInventoryComponent::AddItemAt(UItemObject* NewItem, int32 TopLeftIndex)
 	bIsDirty = true;
 }
 
+void UInventoryComponent::SetWeaponInSlot(int32 Slot, UItemObject* Weapon)
+{
+	if(WeaponSlots.Contains(Slot))
+	{
+		WeaponSlots[Slot] = Weapon;
+	}
+}
+
+void UInventoryComponent::SetItemInPocket(int32 Slot, UItemObject* Item)
+{
+	if(Pockets.Contains(Slot))
+	{
+		Pockets[Slot] = Item;
+	}
+}
+
 bool UInventoryComponent::GetItemAtIndex(int32 Index, UItemObject*& ItemFound)
 {
 	ItemFound = nullptr;
