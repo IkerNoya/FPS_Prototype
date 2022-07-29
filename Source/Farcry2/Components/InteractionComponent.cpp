@@ -27,7 +27,7 @@ void UInteractionComponent::Interact()
 	FindPlayerRotationAndLocation();
 	FCollisionQueryParams TraceParams(FName(TEXT("")), false, GetOwner());
 	FCollisionObjectQueryParams ObjectParams = FCollisionObjectQueryParams(ECC_TO_BITFIELD(ECC_Interactable));
-	DrawDebugLine(GetWorld(), PlayerLocation, CalculateLineTraceEnd(), FColor::Red, false, 5);
+	// DrawDebugLine(GetWorld(), PlayerLocation, CalculateLineTraceEnd(), FColor::Red, false, 5);
 	if (GetWorld()->LineTraceSingleByObjectType(Hit, PlayerLocation, CalculateLineTraceEnd(), ObjectParams,
 	                                            TraceParams))
 	{
@@ -52,7 +52,7 @@ void UInteractionComponent::BeginPlay()
 	Character = Cast<ACharacterBase>(GetOwner());
 	if (!Character)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Nharacter in component"));
+		UE_LOG(LogTemp, Warning, TEXT("No Character in component"));
 	}
 }
 

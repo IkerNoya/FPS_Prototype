@@ -64,7 +64,6 @@ bool UInventoryComponent::IsRoomAvailable(UItemObject* Item, int32 TopLeftIndex)
 	{
 		for(int32 Y = Slot.TileY; Y <= LastYIndex; Y++)
 		{
-			// UE_LOG(LogTemp, Warning, TEXT("X = %d | Y = %d"), LastXIndex, LastYIndex);	
 			FSlot ResultingTile = FSlot(X, Y);
 			if(!IsTileValid(ResultingTile)) return false;
 			UItemObject* AuxItem = nullptr;
