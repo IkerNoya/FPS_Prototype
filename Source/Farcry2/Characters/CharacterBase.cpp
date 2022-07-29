@@ -7,6 +7,8 @@
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/InputComponent.h"
+#include "Inventory/Item.h"
+#include "Inventory/Items/ItemObject.h"
 
 ACharacterBase::ACharacterBase()
 {
@@ -29,6 +31,10 @@ ACharacterBase::ACharacterBase()
 	Mesh1P->SetRelativeRotation(FRotator(1.9f, -19.19f, 5.2f));
 	Mesh1P->SetRelativeLocation(FVector(-0.5f, -4.4f, -155.7f));
 
+	GetMesh()->SetOwnerNoSee(true);
+	GetMesh()->bCastDynamicShadow=true;
+	GetMesh()->CastShadow = true;
+	
 	InteractionComponent = CreateDefaultSubobject<UInteractionComponent>(TEXT("InteractionComponent"));
 	Inventory = CreateDefaultSubobject<UInventoryComponent>(TEXT("InventoryComponent"));
 }
@@ -36,7 +42,19 @@ ACharacterBase::ACharacterBase()
 void ACharacterBase::BeginPlay()
 {
 	Super::BeginPlay();
-	
+	if(InteractionComponent)
+	{
+		InteractionComponent->SendInteractedItem.AddDynamic(this, &ACharacterBase::PickUpItem);
+	}
+}
+
+void ACharacterBase::EndPlay(const EEndPlayReason::Type EndPlayReason)
+{
+	if(InteractionComponent)
+	{
+		InteractionComponent->SendInteractedItem.RemoveDynamic(this, &ACharacterBase::PickUpItem);
+	}
+	Super::EndPlay(EndPlayReason);
 }
 
 void ACharacterBase::OnAttack()
@@ -52,6 +70,17 @@ void ACharacterBase::Interact()
 	if(InteractionComponent)
 	{
 		InteractionComponent->Interact();
+	}
+}
+
+void ACharacterBase::PickUpItem(AItemBase* Item)
+{
+	if(Inventory)
+	{
+		if(Inventory->TryAddItem(Item->GetItemData()))
+		{
+			Item->Destroy();
+		}
 	}
 }
 
@@ -92,6 +121,7 @@ void ACharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 	check(PlayerInputComponent);
 
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
+	PlayerInputComponent->BindAction("OpenInventory", IE_Pressed, this, &ACharacterBase::ToggleInventory);
 	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
 
 	PlayerInputComponent->BindAction("PrimaryAction", IE_Pressed, this, &ACharacterBase::OnAttack);
@@ -105,5 +135,6 @@ void ACharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 	PlayerInputComponent->BindAxis("Look Up / Down Mouse", this, &APawn::AddControllerPitchInput);
 	PlayerInputComponent->BindAxis("Turn Right / Left Gamepad", this, &ACharacterBase::TurnAtRate);
 	PlayerInputComponent->BindAxis("Look Up / Down Gamepad", this, &ACharacterBase::LookUpAtRate);
+
 }
 

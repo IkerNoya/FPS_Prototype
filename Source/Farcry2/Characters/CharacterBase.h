@@ -29,25 +29,35 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components | Custom")
 	UInventoryComponent* Inventory;
 	
-
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Camera")
 	float TurnRateGamepad;
-
-public:
-	ACharacterBase();
+private:
+	UPROPERTY(VisibleAnywhere)
+	AItemBase* EquippedItem = nullptr;
 	
-	UPROPERTY(BlueprintAssignable, Category = "Interaction")
+public:
+	UPROPERTY(BlueprintAssignable)
 	FOnItemAction OnItemAction;
+	
+	ACharacterBase();
 	
 protected:
 	virtual void BeginPlay() override;
+	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	void OnAttack();
 	void Interact();
+	
+	UFUNCTION()
+	void PickUpItem(class AItemBase* Item);
+	
 	void MoveForward(float Value);
 	void MoveRight(float Value);
 	void TurnAtRate(float Rate);
 	void LookUpAtRate(float Rate);
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void ToggleInventory();
 	
 public:	
 	virtual void Tick(float DeltaTime) override;
@@ -55,7 +65,9 @@ public:
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 	FORCEINLINE USkeletalMeshComponent* GetMesh1P() const { return Mesh1P; }
-
 	FORCEINLINE UCameraComponent* GetCameraComponent() const { return Camera; }
-	
+
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	FORCEINLINE AItemBase* GetEquippedItem() const { return EquippedItem; }
+
 };

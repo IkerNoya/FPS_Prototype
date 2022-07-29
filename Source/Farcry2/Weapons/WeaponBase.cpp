@@ -3,27 +3,25 @@
 
 #include "Weapons/WeaponBase.h"
 
-#include "Components/SkeletalMeshComponent.h"
 
 // Sets default values
 AWeaponBase::AWeaponBase()
 {
-	PrimaryActorTick.bCanEverTick = false;
-	Box = CreateDefaultSubobject<UBoxComponent>(TEXT("Box"));
-	Box->SetupAttachment(RootComponent);
-	Mesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Mesh"));
-	Mesh->SetupAttachment(Box);
-	
-	WeaponComponent = CreateDefaultSubobject<UWeaponComponent>(TEXT("Weapon Component"));
+	Mesh = CreateDefaultSubobject<USkeletalMeshComponent>("Weapon");
+	RootComponent = Mesh;
+	WeaponComponent = CreateDefaultSubobject<UWeaponComponent>("WeaponComponent");
 }
 
-void AWeaponBase::HandleInteraction_Implementation(ACharacterBase* InteractionInstigator)
+void AWeaponBase::DisableCollision()
 {
-	IInteractionInterface::HandleInteraction_Implementation(InteractionInstigator);
-	if(InteractionInstigator)
+	if(Mesh)
 	{
-		OnWeaponPickup.Broadcast(InteractionInstigator);
+		Mesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 	}
 }
 
+void AWeaponBase::UseItem_Implementation()
+{
+	Super::UseItem_Implementation();
+}
 

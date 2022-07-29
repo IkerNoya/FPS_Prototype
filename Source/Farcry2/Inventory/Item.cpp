@@ -25,28 +25,11 @@ AItemBase::AItemBase()
 {
 }
 
+void AItemBase::UseItem_Implementation()
+{
+}
+
 void AItemBase::HandleInteraction_Implementation(ACharacterBase* InteractionInstigator)
 {
 	IInteractionInterface::HandleInteraction_Implementation(InteractionInstigator);
-	if (auto* Inventory = Cast<UInventoryComponent>(
-		InteractionInstigator->FindComponentByClass(UInventoryComponent::StaticClass())))
-	{
-		if (Inventory->TryAddItem(ItemData))
-		{
-			Destroy();
-		}
-	}
 }
-
-AStaticItem::AStaticItem()
-{
-	Mesh = CreateDefaultSubobject<UStaticMeshComponent>("Mesh");
-	RootComponent = Mesh;
-}
-
-ASkeletalItem::ASkeletalItem()
-{
-	Mesh = CreateDefaultSubobject<USkeletalMeshComponent>("Mesh");
-	RootComponent = Mesh;
-}
-

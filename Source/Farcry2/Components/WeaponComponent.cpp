@@ -6,6 +6,7 @@
 #include "Farcry2Projectile.h"
 #include "Characters/CharacterBase.h"
 #include "Kismet/GameplayStatics.h"
+#include "Weapons/WeaponBase.h"
 
 // Sets default values for this component's properties
 UWeaponComponent::UWeaponComponent()
@@ -18,6 +19,11 @@ UWeaponComponent::UWeaponComponent()
 void UWeaponComponent::AttachWeapon(ACharacterBase* TargetCharacter)
 {
 	Character = TargetCharacter;
+	if(auto* Weapon = Cast<AWeaponBase>(GetOwner()))
+	{
+		Weapon->DisableComponentsSimulatePhysics();
+		Weapon->DisableCollision();
+	}
 	if(Character)
 	{
 		FAttachmentTransformRules AttachmentRules(EAttachmentRule::SnapToTarget, true);

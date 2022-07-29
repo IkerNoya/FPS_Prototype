@@ -4,8 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "Inventory/Items/ItemObject.h"
 #include "InteractionComponent.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FItemInteraction, AItemBase*, Item);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FActorInteraction, AActor*, Actor);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class FARCRY2_API UInteractionComponent : public UActorComponent
@@ -17,6 +20,9 @@ protected:
 	UPROPERTY(EditAnywhere, Category = "Settings")
 	float Distance = 50.f;
 public:
+	FItemInteraction SendInteractedItem;
+	FActorInteraction SendInteractedActor;
+	
 	UInteractionComponent();
 	
 	virtual void TickComponent(float DeltaTime, ELevelTick TickType,

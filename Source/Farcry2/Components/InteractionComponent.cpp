@@ -6,6 +6,7 @@
 #include "Characters/CharacterBase.h"
 #include "GameFramework/PlayerController.h"
 #include "Interfaces/InteractionInterface.h"
+#include "Inventory/Item.h"
 
 #define ECC_Interactable          ECC_GameTraceChannel3
 
@@ -22,7 +23,7 @@ void UInteractionComponent::TickComponent(float DeltaTime, ELevelTick TickType,
 void UInteractionComponent::Interact()
 {
 	if (!Character) return;
-
+	
 	FHitResult Hit;
 	FindPlayerRotationAndLocation();
 	FCollisionQueryParams TraceParams(FName(TEXT("")), false, GetOwner());
@@ -39,6 +40,14 @@ void UInteractionComponent::Interact()
 			{
 				if (Actor->GetClass()->ImplementsInterface(UInteractionInterface::StaticClass()))
 				{
+					if(auto* Item = Cast<AItemBase>(Actor))
+					{
+						SendInteractedItem.Broadcast(Item);
+					}
+					else
+					{
+						SendInteractedActor.Broadcast(Actor);
+					}
 					InteractedObject->Execute_HandleInteraction(Actor, Character);
 				}
 			}

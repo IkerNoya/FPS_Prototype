@@ -4,33 +4,31 @@
 
 #include "CoreMinimal.h"
 #include "Characters/CharacterBase.h"
-#include "Components/BoxComponent.h"
 #include "Components/WeaponComponent.h"
-#include "GameFramework/Actor.h"
-#include "Interfaces/InteractionInterface.h"
+#include "Inventory/Item.h"
 #include "WeaponBase.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnWeaponPickup, ACharacterBase*, PickUpCharacter);
 
 UCLASS()
-class FARCRY2_API AWeaponBase : public AActor, public IInteractionInterface
+class FARCRY2_API AWeaponBase : public AItemBase
 {
 	GENERATED_BODY()
 protected:
-	UPROPERTY(EditDefaultsOnly, Category = "Components|Collision")
-	UBoxComponent* Box;
-	UPROPERTY(EditDefaultsOnly, Category = "Components|Mesh")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category =  "Weapon")
 	USkeletalMeshComponent* Mesh;
-	UPROPERTY(EditDefaultsOnly, Category = "Components|Custom")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Weapon")
 	UWeaponComponent* WeaponComponent;
-
 public:	
 	// Sets default values for this actor's properties
 	AWeaponBase();
 
-	UPROPERTY(BlueprintAssignable, Category = "Interaction")
-	FOnWeaponPickup OnWeaponPickup;
+	UFUNCTION(BlueprintCallable)
+	void DisableCollision();
+
 protected:
-	virtual void HandleInteraction_Implementation(ACharacterBase* InteractionInstigator) override;
+	virtual void UseItem_Implementation() override;
+	
+
 
 };
