@@ -5,7 +5,6 @@
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
 #include "Inventory/Items/ItemObject.h"
-// #include "Inventory/Items/ItemData.h"
 #include "InventoryComponent.generated.h"
 
 USTRUCT(BlueprintType)
@@ -43,9 +42,7 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory")
 	TArray<UItemObject*> Items;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory")
-	TMap<int32, UItemObject*> WeaponSlots;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory")
-	TMap<int32, UItemObject*> Pockets;
+	TMap<int32, UItemObject*> EquipmentSlots;
 
 	
 
@@ -78,6 +75,8 @@ public:
 	UFUNCTION(BlueprintCallable)
 	TMap<UItemObject*, FSlot> GetAllItems();
 	UFUNCTION(BlueprintCallable)
+	TMap<int32, UItemObject*> GetEquipmentMap();
+	UFUNCTION(BlueprintCallable)
 	bool IsRoomAvailable(UItemObject* Item, int32 TopLeftIndex);
 	UFUNCTION(BlueprintCallable)
 	bool TryAddItem(UItemObject* NewItem);
@@ -86,19 +85,14 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void AddItemAt(UItemObject* NewItem, int32 TopLeftIndex);
 	UFUNCTION(BlueprintCallable)
-	void SetWeaponInSlot(int32 Slot, UItemObject* Weapon);
-	UFUNCTION(BlueprintCallable)
-	void SetItemInPocket(int32 Slot, UItemObject* Item);
+	void SetEquipmentInSlot(int32 Slot, UItemObject* Equipment);
 	
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	FORCEINLINE int32  GetColumns() const {return Columns;}
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	FORCEINLINE int32 GetRows() const {return Rows;}
 	UFUNCTION(BlueprintCallable, BlueprintPure)
-	FORCEINLINE UItemObject* GetItemInWeaponSlot(int32 Slot) const { return WeaponSlots[Slot]; }
-	UFUNCTION(BlueprintCallable, BlueprintPure)
-	FORCEINLINE UItemObject* GetItemInPockets(int32 Slot) const { return Pockets[Slot]; }
-
+	FORCEINLINE UItemObject* GetEquipmentInSlot(int32 Slot) const { return EquipmentSlots[Slot]; }
 private:
 	bool  GetItemAtIndex(int32 Index, UItemObject*& ItemFound);
 	bool IsTileValid(FSlot Tile);

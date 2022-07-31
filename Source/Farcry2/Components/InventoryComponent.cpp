@@ -55,6 +55,12 @@ TMap<UItemObject*, FSlot> UInventoryComponent::GetAllItems()
 	return ItemsMap;
 }
 
+TMap<int32, UItemObject*> UInventoryComponent::GetEquipmentMap()
+{
+	return EquipmentSlots;
+}
+
+
 bool UInventoryComponent::IsRoomAvailable(UItemObject* Item, int32 TopLeftIndex)
 {
 	FSlot Slot = IndexToTile(TopLeftIndex);
@@ -130,19 +136,12 @@ void UInventoryComponent::AddItemAt(UItemObject* NewItem, int32 TopLeftIndex)
 	bIsDirty = true;
 }
 
-void UInventoryComponent::SetWeaponInSlot(int32 Slot, UItemObject* Weapon)
+void UInventoryComponent::SetEquipmentInSlot(int32 Slot, UItemObject* Equipment)
 {
-	if(WeaponSlots.Contains(Slot))
+	if(EquipmentSlots.Contains(Slot))
 	{
-		WeaponSlots[Slot] = Weapon;
-	}
-}
-
-void UInventoryComponent::SetItemInPocket(int32 Slot, UItemObject* Item)
-{
-	if(Pockets.Contains(Slot))
-	{
-		Pockets[Slot] = Item;
+		OnInventoryChange.Broadcast();
+		EquipmentSlots[Slot] = Equipment;
 	}
 }
 

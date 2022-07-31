@@ -4,8 +4,23 @@
 
 #include "CoreMinimal.h"
 #include "UObject/Object.h"
-#include "ItemData.h"
 #include "ItemObject.generated.h"
+
+UENUM(BlueprintType)
+enum class EItemType : uint8
+{
+	Weapon, Equipment
+};
+USTRUCT(BlueprintType)
+struct FARCRY2_API FItemInfo
+{
+	GENERATED_BODY()
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	FIntPoint Dimensions =  FIntPoint::ZeroValue;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite)
+	EItemType Type;
+};
+
 
 /**
  * 
@@ -29,10 +44,14 @@ public:
 	
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Item|Icon")
 	UMaterialInterface* GetIcon() const;
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Item|Icon")
+	FORCEINLINE UMaterialInterface* GetOriginalIcon() const { return Icon; }
 	UFUNCTION(BlueprintCallable, Category = "Item")
 	void Rotate();
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Item")
 	FORCEINLINE bool IsRotated() const  { return bIsRotated; }
 	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Item")
 	FIntPoint GetDimensions();
+	UFUNCTION(BlueprintCallable, BlueprintPure, Category = "Item|Type")
+	FORCEINLINE EItemType GetType() const {return Item.Type;}
 };
