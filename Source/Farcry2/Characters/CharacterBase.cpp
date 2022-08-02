@@ -7,6 +7,7 @@
 #include "Camera/CameraComponent.h"
 #include "Components/CapsuleComponent.h"
 #include "Components/InputComponent.h"
+#include "Components/WeaponComponent.h"
 #include "Inventory/Item.h"
 #include "Inventory/Items/ItemObject.h"
 
@@ -26,15 +27,15 @@ ACharacterBase::ACharacterBase()
 	Mesh1P = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("Mesh1P"));
 	Mesh1P->SetOnlyOwnerSee(true);
 	Mesh1P->SetupAttachment(Camera);
-	Mesh1P->bCastDynamicShadow=false;
-	Mesh1P->CastShadow=false;
+	Mesh1P->bCastDynamicShadow = false;
+	Mesh1P->CastShadow = false;
 	Mesh1P->SetRelativeRotation(FRotator(1.9f, -19.19f, 5.2f));
 	Mesh1P->SetRelativeLocation(FVector(-0.5f, -4.4f, -155.7f));
 
 	GetMesh()->SetOwnerNoSee(true);
-	GetMesh()->bCastDynamicShadow=true;
+	GetMesh()->bCastDynamicShadow = true;
 	GetMesh()->CastShadow = true;
-	
+
 	InteractionComponent = CreateDefaultSubobject<UInteractionComponent>(TEXT("InteractionComponent"));
 	Inventory = CreateDefaultSubobject<UInventoryComponent>(TEXT("InventoryComponent"));
 }
@@ -42,24 +43,38 @@ ACharacterBase::ACharacterBase()
 void ACharacterBase::BeginPlay()
 {
 	Super::BeginPlay();
-	if(InteractionComponent)
+	if (InteractionComponent)
 	{
 		InteractionComponent->SendInteractedItem.AddDynamic(this, &ACharacterBase::PickUpItem);
+	}
+	if (Inventory)
+	{
+		Inventory->OnEquipmentAdded.AddDynamic(this, &ACharacterBase::UpdateCurrentEquipment);
 	}
 }
 
 void ACharacterBase::EndPlay(const EEndPlayReason::Type EndPlayReason)
 {
-	if(InteractionComponent)
+	if (InteractionComponent)
 	{
 		InteractionComponent->SendInteractedItem.RemoveDynamic(this, &ACharacterBase::PickUpItem);
+	}
+	if (Inventory)
+	{
+		Inventory->OnEquipmentAdded.RemoveDynamic(this, &ACharacterBase::UpdateCurrentEquipment);
 	}
 	Super::EndPlay(EndPlayReason);
 }
 
+void ACharacterBase::UpdateCurrentEquipment(int32 Slot)
+{
+	UE_LOG(LogTemp, Warning, TEXT("ENTRO"));
+	SwitchItem(Slot);
+}
+
 void ACharacterBase::OnAttack()
 {
-	if(OnItemAction.IsBound())
+	if (OnItemAction.IsBound())
 	{
 		OnItemAction.Broadcast();
 	}
@@ -67,17 +82,64 @@ void ACharacterBase::OnAttack()
 
 void ACharacterBase::Interact()
 {
-	if(InteractionComponent)
+	if (InteractionComponent)
 	{
 		InteractionComponent->Interact();
 	}
 }
 
+void ACharacterBase::SwitchItem(int32 Slot)
+{
+	if (!Inventory) return;
+	UItemObject* Item = Inventory->SwitchActiveEquipmentSlot(Slot);
+	if (EquippedItem)
+	{
+		if (Item && Inventory->GetActiveSlot() == Slot)
+		{
+			EquippedItem->Destroy();
+			AItemBase* Equipment = Cast<AItemBase>(GetWorld()->SpawnActor(Item->ItemClass));
+			if (Equipment)
+			{
+				if (auto* WeaponComponent = Cast<UWeaponComponent>(
+					Equipment->GetComponentByClass(UWeaponComponent::StaticClass())))
+				{
+					EquippedItem = Equipment;
+					WeaponComponent->AttachWeapon(this);
+				}
+			}
+		}
+		else
+		{
+			if(!Inventory->GetEquipmentInSlot(Inventory->GetActiveSlot()))
+			{
+				EquippedItem->Destroy();
+				EquippedItem=nullptr;
+			}
+		}
+	}
+	else
+	{
+		if (Item && Slot == Inventory->GetActiveSlot())
+		{
+			AItemBase* Equipment = Cast<AItemBase>(GetWorld()->SpawnActor(Item->ItemClass));
+			if (Equipment)
+			{
+				if (auto* WeaponComponent = Cast<UWeaponComponent>(
+					Equipment->GetComponentByClass(UWeaponComponent::StaticClass())))
+				{
+					EquippedItem = Equipment;
+					WeaponComponent->AttachWeapon(this);
+				}
+			}
+		}
+	}
+}
+
 void ACharacterBase::PickUpItem(AItemBase* Item)
 {
-	if(Inventory)
+	if (Inventory)
 	{
-		if(Inventory->TryAddItem(Item->GetItemData()))
+		if (Inventory->TryAddItem(Item->GetItemData()))
 		{
 			Item->Destroy();
 		}
@@ -86,7 +148,7 @@ void ACharacterBase::PickUpItem(AItemBase* Item)
 
 void ACharacterBase::MoveForward(float Value)
 {
-	if(Value!=0)
+	if (Value != 0)
 	{
 		AddMovementInput(GetActorForwardVector(), Value);
 	}
@@ -94,7 +156,7 @@ void ACharacterBase::MoveForward(float Value)
 
 void ACharacterBase::MoveRight(float Value)
 {
-	if(Value!=0)
+	if (Value != 0)
 	{
 		AddMovementInput(GetActorRightVector(), Value);
 	}
@@ -113,7 +175,6 @@ void ACharacterBase::LookUpAtRate(float Rate)
 void ACharacterBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-
 }
 
 void ACharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -135,6 +196,4 @@ void ACharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 	PlayerInputComponent->BindAxis("Look Up / Down Mouse", this, &APawn::AddControllerPitchInput);
 	PlayerInputComponent->BindAxis("Turn Right / Left Gamepad", this, &ACharacterBase::TurnAtRate);
 	PlayerInputComponent->BindAxis("Look Up / Down Gamepad", this, &ACharacterBase::LookUpAtRate);
-
 }
-

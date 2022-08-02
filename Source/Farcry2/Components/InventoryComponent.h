@@ -28,6 +28,7 @@ struct FSlot
 };
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInventoryChange);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnEquipmentAdded, int32, Slot);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent), Blueprintable)
 class FARCRY2_API UInventoryComponent : public UActorComponent
@@ -44,7 +45,8 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory")
 	TMap<int32, UItemObject*> EquipmentSlots;
 
-	
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Inventory")
+	int32 CurrentEquipmentSlot = 0;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory")
 	int32 Columns = 8;
@@ -54,6 +56,8 @@ protected:
 public:
 	UPROPERTY(BlueprintAssignable)
 	FOnInventoryChange OnInventoryChange;
+	UPROPERTY(BlueprintAssignable)
+	FOnEquipmentAdded OnEquipmentAdded;
 	
 public:
 	// Sets default values for this component's properties
@@ -86,6 +90,8 @@ public:
 	void AddItemAt(UItemObject* NewItem, int32 TopLeftIndex);
 	UFUNCTION(BlueprintCallable)
 	void SetEquipmentInSlot(int32 Slot, UItemObject* Equipment);
+	UFUNCTION(BlueprintCallable)
+	UItemObject* SwitchActiveEquipmentSlot(int32 Slot);
 	
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	FORCEINLINE int32  GetColumns() const {return Columns;}
@@ -93,6 +99,10 @@ public:
 	FORCEINLINE int32 GetRows() const {return Rows;}
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	FORCEINLINE UItemObject* GetEquipmentInSlot(int32 Slot) const { return EquipmentSlots[Slot]; }
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	FORCEINLINE int32 GetActiveSlot() const { return CurrentEquipmentSlot; }
+	UFUNCTION(BlueprintCallable)
+	FORCEINLINE void SetActiveSlot(int32 Slot) {CurrentEquipmentSlot = Slot;}
 private:
 	bool  GetItemAtIndex(int32 Index, UItemObject*& ItemFound);
 	bool IsTileValid(FSlot Tile);

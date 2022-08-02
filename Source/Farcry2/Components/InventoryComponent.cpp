@@ -16,15 +16,24 @@ void UInventoryComponent::BeginPlay()
 	Items.SetNum(Columns * Rows);
 }
 
+UItemObject* UInventoryComponent::SwitchActiveEquipmentSlot(int32 Slot)
+{
+	if (EquipmentSlots.Contains(Slot) && EquipmentSlots[Slot])
+	{
+		return EquipmentSlots[Slot];
+	}
+	return nullptr;
+}
+
 
 // Called every frame
 void UInventoryComponent::TickComponent(float DeltaTime, ELevelTick TickType,
                                         FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-	if(bIsDirty)
+	if (bIsDirty)
 	{
-		bIsDirty=false;
+		bIsDirty = false;
 		OnInventoryChange.Broadcast();
 	}
 }
@@ -45,9 +54,9 @@ int32 UInventoryComponent::TileToIndex(FSlot Tile)
 TMap<UItemObject*, FSlot> UInventoryComponent::GetAllItems()
 {
 	TMap<UItemObject*, FSlot> ItemsMap;
-	for(int32 i = 0; i < Items.Num(); i++)
+	for (int32 i = 0; i < Items.Num(); i++)
 	{
-		if(IsValid(Items[i]) && !ItemsMap.Contains(Items[i]))
+		if (IsValid(Items[i]) && !ItemsMap.Contains(Items[i]))
 		{
 			ItemsMap.Add(Items[i], IndexToTile(i));
 		}
@@ -66,16 +75,16 @@ bool UInventoryComponent::IsRoomAvailable(UItemObject* Item, int32 TopLeftIndex)
 	FSlot Slot = IndexToTile(TopLeftIndex);
 	int32 LastXIndex = Slot.TileX + (Item->GetDimensions().X - 1);
 	int32 LastYIndex = Slot.TileY + (Item->GetDimensions().Y - 1);
-	for(int32 X = Slot.TileX; X <= LastXIndex; X++)
+	for (int32 X = Slot.TileX; X <= LastXIndex; X++)
 	{
-		for(int32 Y = Slot.TileY; Y <= LastYIndex; Y++)
+		for (int32 Y = Slot.TileY; Y <= LastYIndex; Y++)
 		{
 			FSlot ResultingTile = FSlot(X, Y);
-			if(!IsTileValid(ResultingTile)) return false;
+			if (!IsTileValid(ResultingTile)) return false;
 			UItemObject* AuxItem = nullptr;
 			bool IsIndexValid = GetItemAtIndex(TileToIndex(ResultingTile), AuxItem);
-			if(!IsIndexValid) return false;
-			if(IsValid(AuxItem)) return false;
+			if (!IsIndexValid) return false;
+			if (IsValid(AuxItem)) return false;
 		}
 	}
 	return true;
@@ -83,20 +92,20 @@ bool UInventoryComponent::IsRoomAvailable(UItemObject* Item, int32 TopLeftIndex)
 
 bool UInventoryComponent::TryAddItem(UItemObject* NewItem)
 {
-	if(!IsValid(NewItem)) return false;
+	if (!IsValid(NewItem)) return false;
 	bool bWasRotated = false;
-	for(int32 i = 0; i < Items.Num(); i++)
+	for (int32 i = 0; i < Items.Num(); i++)
 	{
-		if(IsRoomAvailable(NewItem, i))
+		if (IsRoomAvailable(NewItem, i))
 		{
 			AddItemAt(NewItem, i);
 			return true;
 		}
 	}
 	NewItem->Rotate();
-	for(int32 i = 0; i < Items.Num(); i++)
+	for (int32 i = 0; i < Items.Num(); i++)
 	{
-		if(IsRoomAvailable(NewItem, i))
+		if (IsRoomAvailable(NewItem, i))
 		{
 			AddItemAt(NewItem, i);
 			return true;
@@ -107,14 +116,14 @@ bool UInventoryComponent::TryAddItem(UItemObject* NewItem)
 
 void UInventoryComponent::RemoveItem(UItemObject* Item)
 {
-	if(IsValid(Item))
+	if (IsValid(Item))
 	{
-		for(int i = 0; i < Items.Num(); i++)
+		for (int i = 0; i < Items.Num(); i++)
 		{
-			if(Items[i] == Item)
+			if (Items[i] == Item)
 			{
 				Items[i] = nullptr;
-				bIsDirty=true;
+				bIsDirty = true;
 			}
 		}
 	}
@@ -125,9 +134,9 @@ void UInventoryComponent::AddItemAt(UItemObject* NewItem, int32 TopLeftIndex)
 	FSlot Slot = IndexToTile(TopLeftIndex);
 	int32 LastXIndex = Slot.TileX + (NewItem->GetDimensions().X - 1);
 	int32 LastYIndex = Slot.TileY + (NewItem->GetDimensions().Y - 1);
-	for(int32 X = Slot.TileX; X <= LastXIndex; X++)
+	for (int32 X = Slot.TileX; X <= LastXIndex; X++)
 	{
-		for(int32 Y = Slot.TileY; Y <= LastYIndex; Y++)
+		for (int32 Y = Slot.TileY; Y <= LastYIndex; Y++)
 		{
 			FSlot ResultingTile = FSlot(X, Y);
 			Items[TileToIndex(ResultingTile)] = NewItem;
@@ -138,26 +147,26 @@ void UInventoryComponent::AddItemAt(UItemObject* NewItem, int32 TopLeftIndex)
 
 void UInventoryComponent::SetEquipmentInSlot(int32 Slot, UItemObject* Equipment)
 {
-	if(EquipmentSlots.Contains(Slot))
+	if (EquipmentSlots.Contains(Slot))
 	{
 		OnInventoryChange.Broadcast();
 		EquipmentSlots[Slot] = Equipment;
+		OnEquipmentAdded.Broadcast(Slot);
 	}
 }
 
 bool UInventoryComponent::GetItemAtIndex(int32 Index, UItemObject*& ItemFound)
 {
 	ItemFound = nullptr;
-	if(Items.IsValidIndex(Index))
+	if (Items.IsValidIndex(Index))
 	{
 		ItemFound = Items[Index];
 		return true;
 	}
-		return false;
+	return false;
 }
 
 bool UInventoryComponent::IsTileValid(FSlot Tile)
 {
-	return Tile.TileX >= 0 && Tile.TileY >= 0 && Tile.TileX < Columns && Tile.TileY  < Rows;
+	return Tile.TileX >= 0 && Tile.TileY >= 0 && Tile.TileX < Columns && Tile.TileY < Rows;
 }
-

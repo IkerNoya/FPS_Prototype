@@ -153,6 +153,9 @@ void UInventoryGrid::InitializeGrid(UInventoryComponent* InventoryComponent, flo
 	SetGridSize();
 	CreateLineSegments();
 	Refresh();
-	Inventory->OnInventoryChange.AddDynamic(this, &UInventoryGrid::Refresh);
+	if(Inventory)
+	{
+		Inventory->OnInventoryChange.AddDynamic(this, &UInventoryGrid::Refresh);
+	}
 }
 

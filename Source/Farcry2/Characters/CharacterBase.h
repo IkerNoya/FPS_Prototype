@@ -50,6 +50,8 @@ protected:
 	
 	UFUNCTION()
 	void PickUpItem(class AItemBase* Item);
+	UFUNCTION(BlueprintCallable)
+	void SwitchItem(int32 Slot);
 	
 	void MoveForward(float Value);
 	void MoveRight(float Value);
@@ -69,5 +71,12 @@ public:
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	FORCEINLINE AItemBase* GetEquippedItem() const { return EquippedItem; }
+	
+
+private:
+	UFUNCTION()
+	void UpdateCurrentEquipment(int32 Slot);
 
 };
+
+
