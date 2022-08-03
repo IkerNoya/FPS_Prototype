@@ -20,17 +20,31 @@ class FARCRY2_API ACharacterBase : public ACharacter
 {
 	GENERATED_BODY()
 protected:
-	UPROPERTY(EditDefaultsOnly, Category = "Components|Mesh")
+	UPROPERTY(EditDefaultsOnly, Category = "Components")
 	USkeletalMeshComponent* Mesh1P;
-	UPROPERTY(EditDefaultsOnly, Category = "Components|Camera")
+	UPROPERTY(EditDefaultsOnly, Category = "Components")
 	UCameraComponent* Camera;
 	UPROPERTY(EditDefaultsOnly, Category = "Components|Custom")
 	UInteractionComponent* InteractionComponent;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components | Custom")
 	UInventoryComponent* Inventory;
 	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Movement")
+	float RegularSpeed = 400.f;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Movement")
+	float RegularCrouchSpeed = 250.f;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Movement")
+	float WalkingSpeed = 200.f;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Movement")
+	float SprintingSpeed = 500.f;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Movement")
+	float ProneSpeed = 100.f;
+	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Camera")
 	float TurnRateGamepad;
+
+	bool bIsWalking = false;
+	bool bIsSprinting = false;
 private:
 	UPROPERTY(VisibleAnywhere)
 	AItemBase* EquippedItem = nullptr;
@@ -57,10 +71,20 @@ protected:
 	void MoveRight(float Value);
 	void TurnAtRate(float Rate);
 	void LookUpAtRate(float Rate);
+	
+	void StartSprinting();
+	void StopSprinting();
+	
+	void StartWalking();
+	void StopWalking();
+	
+	void StartCrouch();
+	void EndCrouch();
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void ToggleInventory();
-	
+	UFUNCTION(BlueprintImplementableEvent)
+	void HandleSpeedChange(float NewSpeed);
 public:	
 	virtual void Tick(float DeltaTime) override;
 
@@ -71,6 +95,10 @@ public:
 
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	FORCEINLINE AItemBase* GetEquippedItem() const { return EquippedItem; }
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	FORCEINLINE bool GetSprintingStatus() const { return bIsSprinting; }
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	FORCEINLINE bool GetWalkingStatus() const { return bIsWalking; }
 	
 
 private:

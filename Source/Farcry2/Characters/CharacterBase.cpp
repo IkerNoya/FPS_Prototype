@@ -8,6 +8,7 @@
 #include "Components/CapsuleComponent.h"
 #include "Components/InputComponent.h"
 #include "Components/WeaponComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "Inventory/Item.h"
 #include "Inventory/Items/ItemObject.h"
 
@@ -51,6 +52,8 @@ void ACharacterBase::BeginPlay()
 	{
 		Inventory->OnEquipmentAdded.AddDynamic(this, &ACharacterBase::UpdateCurrentEquipment);
 	}
+	GetCharacterMovement()->MaxWalkSpeed = RegularSpeed;
+	GetCharacterMovement()->MaxWalkSpeedCrouched = RegularCrouchSpeed;
 }
 
 void ACharacterBase::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -68,7 +71,6 @@ void ACharacterBase::EndPlay(const EEndPlayReason::Type EndPlayReason)
 
 void ACharacterBase::UpdateCurrentEquipment(int32 Slot)
 {
-	UE_LOG(LogTemp, Warning, TEXT("ENTRO"));
 	SwitchItem(Slot);
 }
 
@@ -172,6 +174,46 @@ void ACharacterBase::LookUpAtRate(float Rate)
 	AddControllerPitchInput(Rate * TurnRateGamepad * GetWorld()->GetDeltaSeconds());
 }
 
+void ACharacterBase::StartSprinting()
+{
+	if(bIsCrouched)
+			UnCrouch();
+	bIsWalking = false;
+	bIsSprinting=true;
+	HandleSpeedChange(SprintingSpeed);
+}
+
+void ACharacterBase::StopSprinting()
+{
+	if(!bIsSprinting) return;
+	bIsSprinting=false;
+	HandleSpeedChange(RegularSpeed);
+}
+
+void ACharacterBase::StartWalking()
+{
+	bIsSprinting=false;
+	bIsWalking = true;
+	HandleSpeedChange(WalkingSpeed);
+}
+
+void ACharacterBase::StopWalking()
+{
+	if(!bIsWalking) return;
+	bIsWalking = false;
+	HandleSpeedChange(RegularSpeed);
+}
+
+void ACharacterBase::StartCrouch()
+{
+	Crouch();
+}
+
+void ACharacterBase::EndCrouch()
+{
+	UnCrouch();
+}
+
 void ACharacterBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
@@ -184,6 +226,12 @@ void ACharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
 	PlayerInputComponent->BindAction("OpenInventory", IE_Pressed, this, &ACharacterBase::ToggleInventory);
 	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
+	PlayerInputComponent->BindAction("Crouch", IE_Pressed, this, &ACharacterBase::StartCrouch);
+	PlayerInputComponent->BindAction("Crouch", IE_Released, this, &ACharacterBase::EndCrouch);
+	PlayerInputComponent->BindAction("Sprint", IE_Pressed, this, &ACharacterBase::StartSprinting);
+	PlayerInputComponent->BindAction("Sprint", IE_Released, this, &ACharacterBase::StopSprinting);
+	PlayerInputComponent->BindAction("Walk", IE_Pressed, this, &ACharacterBase::StartWalking);
+	PlayerInputComponent->BindAction("Walk", IE_Released, this, &ACharacterBase::StopWalking);
 
 	PlayerInputComponent->BindAction("PrimaryAction", IE_Pressed, this, &ACharacterBase::OnAttack);
 
