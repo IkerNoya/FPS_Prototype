@@ -112,10 +112,10 @@ void ACharacterBase::SwitchItem(int32 Slot)
 		}
 		else
 		{
-			if(!Inventory->GetEquipmentInSlot(Inventory->GetActiveSlot()))
+			if (!Inventory->GetEquipmentInSlot(Inventory->GetActiveSlot()))
 			{
 				EquippedItem->Destroy();
-				EquippedItem=nullptr;
+				EquippedItem = nullptr;
 			}
 		}
 	}
@@ -176,36 +176,37 @@ void ACharacterBase::LookUpAtRate(float Rate)
 
 void ACharacterBase::StartSprinting()
 {
-	if(bIsCrouched)
-			UnCrouch();
-	bIsWalking = false;
-	bIsSprinting=true;
+	if(GetCharacterMovement()->IsFalling()) return;
+	if (bIsCrouched)
+		EndCrouch();
+	SetMovementState(EMovementState::Sprinting);
 	HandleSpeedChange(SprintingSpeed);
 }
 
 void ACharacterBase::StopSprinting()
 {
-	if(!bIsSprinting) return;
-	bIsSprinting=false;
+	if (MovementState != EMovementState::Sprinting) return;
+	SetMovementState(EMovementState::Running);
 	HandleSpeedChange(RegularSpeed);
 }
 
 void ACharacterBase::StartWalking()
 {
-	bIsSprinting=false;
-	bIsWalking = true;
+	if(GetCharacterMovement()->IsFalling()) return;
+	SetMovementState(EMovementState::Walking);
 	HandleSpeedChange(WalkingSpeed);
 }
 
 void ACharacterBase::StopWalking()
 {
-	if(!bIsWalking) return;
-	bIsWalking = false;
+	if (MovementState != EMovementState::Walking) return;
+	SetMovementState(EMovementState::Running);
 	HandleSpeedChange(RegularSpeed);
 }
 
 void ACharacterBase::StartCrouch()
 {
+	if(GetCharacterMovement()->IsFalling()) return;
 	Crouch();
 }
 
@@ -214,23 +215,34 @@ void ACharacterBase::EndCrouch()
 	UnCrouch();
 }
 
+void ACharacterBase::StartJump()
+{
+	Jump();
+	SetMovementState(EMovementState::Jumping);
+}
+
 void ACharacterBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	if(GetMovementState() == EMovementState::Jumping && !GetCharacterMovement()->IsFalling())
+		SetMovementState(EMovementState::Running);			
 }
 
 void ACharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	check(PlayerInputComponent);
 
-	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacter::Jump);
-	PlayerInputComponent->BindAction("OpenInventory", IE_Pressed, this, &ACharacterBase::ToggleInventory);
+	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacterBase::StartJump);
 	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
+
+	PlayerInputComponent->BindAction("OpenInventory", IE_Pressed, this, &ACharacterBase::ToggleInventory);
+
 	PlayerInputComponent->BindAction("Crouch", IE_Pressed, this, &ACharacterBase::StartCrouch);
-	PlayerInputComponent->BindAction("Crouch", IE_Released, this, &ACharacterBase::EndCrouch);
 	PlayerInputComponent->BindAction("Sprint", IE_Pressed, this, &ACharacterBase::StartSprinting);
-	PlayerInputComponent->BindAction("Sprint", IE_Released, this, &ACharacterBase::StopSprinting);
 	PlayerInputComponent->BindAction("Walk", IE_Pressed, this, &ACharacterBase::StartWalking);
+
+	PlayerInputComponent->BindAction("Crouch", IE_Released, this, &ACharacterBase::EndCrouch);
+	PlayerInputComponent->BindAction("Sprint", IE_Released, this, &ACharacterBase::StopSprinting);
 	PlayerInputComponent->BindAction("Walk", IE_Released, this, &ACharacterBase::StopWalking);
 
 	PlayerInputComponent->BindAction("PrimaryAction", IE_Pressed, this, &ACharacterBase::OnAttack);

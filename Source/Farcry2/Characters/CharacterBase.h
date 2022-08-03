@@ -13,6 +13,13 @@ class UCameraComponent;
 class UAnimMontage;
 class USoundBase;
 
+UENUM(BlueprintType)
+enum class EMovementState : uint8
+{
+	Walking, Running, Sprinting, Jumping, Mantling, Vaulting, Sliding
+};
+
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnItemAction);
 
 UCLASS()
@@ -29,6 +36,8 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components | Custom")
 	UInventoryComponent* Inventory;
 	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement")
+	EMovementState MovementState = EMovementState::Running;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Movement")
 	float RegularSpeed = 400.f;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Movement")
@@ -43,8 +52,6 @@ protected:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Camera")
 	float TurnRateGamepad;
 
-	bool bIsWalking = false;
-	bool bIsSprinting = false;
 private:
 	UPROPERTY(VisibleAnywhere)
 	AItemBase* EquippedItem = nullptr;
@@ -81,6 +88,8 @@ protected:
 	void StartCrouch();
 	void EndCrouch();
 
+	void StartJump();
+
 	UFUNCTION(BlueprintImplementableEvent)
 	void ToggleInventory();
 	UFUNCTION(BlueprintImplementableEvent)
@@ -96,9 +105,9 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	FORCEINLINE AItemBase* GetEquippedItem() const { return EquippedItem; }
 	UFUNCTION(BlueprintCallable, BlueprintPure)
-	FORCEINLINE bool GetSprintingStatus() const { return bIsSprinting; }
-	UFUNCTION(BlueprintCallable, BlueprintPure)
-	FORCEINLINE bool GetWalkingStatus() const { return bIsWalking; }
+	FORCEINLINE EMovementState GetMovementState() const { return MovementState; }
+	UFUNCTION(BlueprintCallable)
+	void SetMovementState(EMovementState State) { MovementState = State; }
 	
 
 private:
