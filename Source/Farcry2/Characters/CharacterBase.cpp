@@ -69,6 +69,40 @@ void ACharacterBase::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	Super::EndPlay(EndPlayReason);
 }
 
+void ACharacterBase::SetMovementState(EMovementState State)
+{
+	PrevMovementState = MovementState;
+	switch (State) {
+	case EMovementState::Walking:
+		HandleSpeedChange(WalkingSpeed);
+		break;
+	case EMovementState::Running:
+		HandleSpeedChange(RegularSpeed);
+		break;
+	case EMovementState::Sprinting:
+		HandleSpeedChange(SprintingSpeed);
+	 break;
+	case EMovementState::Jumping:
+		{
+			switch (PrevMovementState) {
+			case EMovementState::Walking:
+				NextMovementState = EMovementState::Walking;
+				break;
+			case EMovementState::Running:
+				NextMovementState = EMovementState::Running;
+				break;
+			case EMovementState::Sprinting:
+				NextMovementState = EMovementState::Sprinting;
+				break;
+			default: ;
+			}
+		}
+		break;
+	default: ;
+	}
+	MovementState = State;
+}
+
 void ACharacterBase::UpdateCurrentEquipment(int32 Slot)
 {
 	SwitchItem(Slot);
@@ -176,32 +210,44 @@ void ACharacterBase::LookUpAtRate(float Rate)
 
 void ACharacterBase::StartSprinting()
 {
-	if(GetCharacterMovement()->IsFalling()) return;
+	if(GetCharacterMovement()->IsFalling())
+	{
+		NextMovementState = EMovementState::Sprinting;
+		return;
+	}
 	if (bIsCrouched)
 		EndCrouch();
 	SetMovementState(EMovementState::Sprinting);
-	HandleSpeedChange(SprintingSpeed);
 }
 
 void ACharacterBase::StopSprinting()
 {
-	if (MovementState != EMovementState::Sprinting) return;
+	if (MovementState != EMovementState::Sprinting)
+	{
+		NextMovementState = EMovementState::Running;
+		return;
+	}
 	SetMovementState(EMovementState::Running);
-	HandleSpeedChange(RegularSpeed);
 }
 
 void ACharacterBase::StartWalking()
 {
-	if(GetCharacterMovement()->IsFalling()) return;
+	if(GetCharacterMovement()->IsFalling())
+	{
+		NextMovementState = EMovementState::Walking;
+		return;
+	}
 	SetMovementState(EMovementState::Walking);
-	HandleSpeedChange(WalkingSpeed);
 }
 
 void ACharacterBase::StopWalking()
 {
-	if (MovementState != EMovementState::Walking) return;
+	if (MovementState != EMovementState::Walking)
+	{
+		NextMovementState = EMovementState::Running;
+		return;
+	}
 	SetMovementState(EMovementState::Running);
-	HandleSpeedChange(RegularSpeed);
 }
 
 void ACharacterBase::StartCrouch()
@@ -225,7 +271,7 @@ void ACharacterBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	if(GetMovementState() == EMovementState::Jumping && !GetCharacterMovement()->IsFalling())
-		SetMovementState(EMovementState::Running);			
+			SetMovementState(NextMovementState);
 }
 
 void ACharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)

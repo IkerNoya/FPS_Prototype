@@ -16,7 +16,7 @@ class USoundBase;
 UENUM(BlueprintType)
 enum class EMovementState : uint8
 {
-	Walking, Running, Sprinting, Jumping, Mantling, Vaulting, Sliding
+	None, Walking, Running, Sprinting, Jumping, Mantling, Vaulting, Sliding
 };
 
 
@@ -38,6 +38,10 @@ protected:
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement")
 	EMovementState MovementState = EMovementState::Running;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement")
+	EMovementState PrevMovementState = EMovementState::Running;
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement")
+	EMovementState NextMovementState = EMovementState::Running;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Movement")
 	float RegularSpeed = 400.f;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Movement")
@@ -106,8 +110,10 @@ public:
 	FORCEINLINE AItemBase* GetEquippedItem() const { return EquippedItem; }
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	FORCEINLINE EMovementState GetMovementState() const { return MovementState; }
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	FORCEINLINE EMovementState GetPreviousMovementState() const { return PrevMovementState; }
 	UFUNCTION(BlueprintCallable)
-	void SetMovementState(EMovementState State) { MovementState = State; }
+	void SetMovementState(EMovementState State);
 	
 
 private:
