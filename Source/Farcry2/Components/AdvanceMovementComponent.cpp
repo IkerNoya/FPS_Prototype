@@ -25,15 +25,14 @@ UAdvanceMovementComponent::UAdvanceMovementComponent()
 void UAdvanceMovementComponent::BeginPlay()
 {
 	Super::BeginPlay();
-	if(auto* Owner = Cast<ACharacterBase>(GetOwner()))
+	if (auto* Owner = Cast<ACharacterBase>(GetOwner()))
 	{
 		Character = Owner;
 	}
-	if(!Character) return;
+	if (!Character) return;
 	Character->GetCharacterMovement()->MaxWalkSpeed = RegularSpeed;
 	Character->GetCharacterMovement()->MaxWalkSpeedCrouched = RegularCrouchSpeed;
 	// ...
-	
 }
 
 
@@ -42,16 +41,17 @@ void UAdvanceMovementComponent::TickComponent(float DeltaTime, ELevelTick TickTy
                                               FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-	if(!Character)return;
-	switch (GetMovementState()) { 
+	if (!Character)return;
+	switch (GetMovementState())
+	{
 	case EMovementState::Sprinting:
-		if(GetForwardInput() <= 0)
+		if (GetForwardInput() <= 0)
 		{
 			StopSprinting();
 		}
 		break;
 	case EMovementState::Jumping:
-		if(!Character->GetCharacterMovement()->IsFalling())
+		if (!Character->GetCharacterMovement()->IsFalling())
 		{
 			PlayCameraShake(LandingShake);
 			SetMovementState(NextMovementState);
@@ -60,6 +60,8 @@ void UAdvanceMovementComponent::TickComponent(float DeltaTime, ELevelTick TickTy
 	case EMovementState::Mantling:
 		MantleMovement();
 		break;
+	case EMovementState::Vaulting:
+		VaultMovement();
 	default: ;
 	}
 	// ...
@@ -68,10 +70,10 @@ void UAdvanceMovementComponent::TickComponent(float DeltaTime, ELevelTick TickTy
 void UAdvanceMovementComponent::InitializeInputs(UInputComponent* PlayerInputComponent, ACharacter* OwnerCharacter)
 {
 	check(PlayerInputComponent);
-	
+
 	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &UAdvanceMovementComponent::StartJump);
 	PlayerInputComponent->BindAction("Jump", IE_Released, Character, &ACharacter::StopJumping);
-	
+
 	PlayerInputComponent->BindAction("Crouch", IE_Pressed, this, &UAdvanceMovementComponent::StartCrouch);
 	PlayerInputComponent->BindAction("Sprint", IE_Pressed, this, &UAdvanceMovementComponent::StartSprinting);
 	PlayerInputComponent->BindAction("Walk", IE_Pressed, this, &UAdvanceMovementComponent::StartWalking);
@@ -84,7 +86,8 @@ void UAdvanceMovementComponent::InitializeInputs(UInputComponent* PlayerInputCom
 void UAdvanceMovementComponent::SetMovementState(EMovementState State)
 {
 	PrevMovementState = MovementState;
-	switch (State) {
+	switch (State)
+	{
 	case EMovementState::Walking:
 		Character->HandleSpeedChange(WalkingSpeed);
 		break;
@@ -94,53 +97,56 @@ void UAdvanceMovementComponent::SetMovementState(EMovementState State)
 	case EMovementState::Sprinting:
 		Character->HandleSpeedChange(SprintingSpeed);
 		break;
-	case EMovementState::Jumping:
-		{
-			switch (PrevMovementState) {
-			case EMovementState::Walking:
-				NextMovementState = EMovementState::Walking;
-				break;
-			case EMovementState::Running:
-				NextMovementState = EMovementState::Running;
-				break;
-			case EMovementState::Sprinting:
-				NextMovementState = EMovementState::Sprinting;
-				break;
-			default: ;
-			}
-		}
-		break;
 	default: ;
+	}
+	if(State == EMovementState::Jumping || State == EMovementState::Mantling || State == EMovementState::Vaulting)
+	{
+		switch (PrevMovementState)
+		{
+		case EMovementState::Walking:
+			NextMovementState = EMovementState::Walking;
+			break;
+		case EMovementState::Running:
+			NextMovementState = EMovementState::Running;
+			break;
+		case EMovementState::Sprinting:
+			NextMovementState = EMovementState::Sprinting;
+			break;
+		default: ;
+		}
 	}
 	MovementState = State;
 }
 
 float UAdvanceMovementComponent::GetForwardInput() const
 {
-	if(!Character)
+	if (!Character)
 		return 0.f;
-		
-	return FVector::DotProduct(Character->GetActorForwardVector(), Character->GetCharacterMovement()->GetLastInputVector());
+
+	return FVector::DotProduct(Character->GetActorForwardVector(),
+	                           Character->GetCharacterMovement()->GetLastInputVector());
 }
 
 void UAdvanceMovementComponent::MantleCheck()
 {
 	FRotator Rotation = FRotator::ZeroRotator;
 	FVector EyesLocation;
-	Character->GetController()->GetActorEyesViewPoint(EyesLocation,Rotation);
-	EyesLocation =  (EyesLocation + FVector(0,0,50.f)) + Character->GetActorForwardVector() * 100.f;
-	FVector FeetLocation = Character->GetActorLocation() + FVector(0,0, Character->GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight() - MantleHeight);
+	Character->GetController()->GetActorEyesViewPoint(EyesLocation, Rotation);
+	EyesLocation = (EyesLocation + FVector(0, 0, 50.f)) + Character->GetActorForwardVector() * 100.f;
+	FVector FeetLocation = Character->GetActorLocation() + FVector(
+		0, 0, Character->GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight() - MantleHeight);
 	FeetLocation += Character->GetActorForwardVector() * 100.f;
 	FQuat quat;
 	FHitResult Hit;
 	FCollisionShape Shape;
-	Shape.MakeCapsule(20,10);
-	if(GetWorld()->SweepSingleByChannel(Hit, EyesLocation, FeetLocation, quat, ECC_Visibility, Shape))
+	Shape.MakeCapsule(20, 10);
+	if (GetWorld()->SweepSingleByChannel(Hit, EyesLocation, FeetLocation, quat, ECC_Visibility, Shape))
 	{
 		MantleDistance = Hit.Distance;
-		if(Character->GetCharacterMovement()->IsWalkable(Hit))
+		if (Character->GetCharacterMovement()->IsWalkable(Hit))
 		{
-			MantlePosition = Hit.ImpactPoint + FVector(0,0,Character->GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight());
+			MantlePosition = Hit.ImpactPoint + FVector(
+				0, 0, Character->GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight());
 			MantleStart();
 		}
 	}
@@ -167,25 +173,84 @@ void UAdvanceMovementComponent::MantleMovement()
 	// FRotator TargetRotation = UKismetMathLibrary::FindLookAtRotation(ActorLocation, MantleLocation);	
 	// Character->GetController()->SetControlRotation(FMath::RInterpTo(CurrentRotation, TargetRotation, GetWorld()->GetDeltaSeconds(), 7.f));
 	float Speed = IsQuickMantle() ? QuickMantleSpeed : MantleSpeed;
-	Character->SetActorLocation(FMath::VInterpTo(Character->GetActorLocation(), MantlePosition,GetWorld()->GetDeltaSeconds(), Speed));
-	if(FVector::Distance(Character->GetActorLocation(), MantlePosition) < 8)
+	Character->SetActorLocation(FMath::VInterpTo(Character->GetActorLocation(), MantlePosition,
+	                                             GetWorld()->GetDeltaSeconds(), Speed));
+	if (FVector::Distance(Character->GetActorLocation(), MantlePosition) < 8)
 	{
 		Character->GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
 		SetMovementState(NextMovementState);
 	}
 }
 
+void UAdvanceMovementComponent::VaultCheck()
+{
+	FVector CharacterLocation = Character->GetActorLocation()/* + FVector(0, 0, 40.f)*/;
+	FVector CharacterForward = Character->GetActorForwardVector() * 100.f;
+	FHitResult Hit;
+	FCollisionObjectQueryParams QueryParams;
+	QueryParams.AddObjectTypesToQuery(ECC_WorldStatic);
+	if (GetWorld()->LineTraceSingleByObjectType(Hit, CharacterLocation, CharacterLocation + CharacterForward,
+	                                            QueryParams))
+	{
+		FVector WallNormal;
+		FVector WallLocation;
+		WallLocation = Hit.Location;
+		WallNormal = Hit.Normal;
+		FRotator NormalRotator = UKismetMathLibrary::MakeRotFromX(WallNormal);
+		FVector WallForward = NormalRotator.Vector() * -10.f;
+		
+		if (FHitResult SecondHit; GetWorld()->LineTraceSingleByObjectType(SecondHit, WallLocation + WallForward + FVector(0, 0, 200),
+		                                                                  WallLocation + WallForward, QueryParams))
+		{
+			FVector NewWallForward = NormalRotator.Vector() * -50.f;
+			FVector WallHeight = SecondHit.Location;
+			if ((WallHeight - WallLocation).Z > 60)
+			{
+				return;
+			}
+			if (FHitResult ThirdHit; GetWorld()->LineTraceSingleByObjectType(ThirdHit, WallLocation + NewWallForward + FVector(0, 0, 250),
+			                                                                 WallLocation + NewWallForward - FVector(0, 0, 50), QueryParams))
+			{
+				return;
+			}
+		}
+		VaultPosition = WallLocation + CharacterForward;
+		StartVault();
+	}
+}
+
+void UAdvanceMovementComponent::StartVault()
+{
+	SetMovementState(EMovementState::Vaulting);
+	PlayCameraShake(VaultShake);
+	Character->GetCharacterMovement()->StopMovementImmediately();
+	Character->GetCharacterMovement()->DisableMovement();
+	Character->GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+}
+
+void UAdvanceMovementComponent::VaultMovement()
+{
+	Character->SetActorLocation(FMath::VInterpTo(Character->GetActorLocation(), VaultPosition,
+	                                             GetWorld()->GetDeltaSeconds(), VaultSpeed));
+	if (FVector::Distance(Character->GetActorLocation(), VaultPosition) < 8)
+	{
+		Character->GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
+		SetMovementState(NextMovementState);
+		Character->GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	}
+}
+
 void UAdvanceMovementComponent::StartSprinting()
 {
-	if(GetForwardInput() <= 0) return;
-	if(Character && Character->GetCharacterMovement()->IsFalling())
+	if (GetForwardInput() <= 0) return;
+	if (Character && Character->GetCharacterMovement()->IsFalling())
 	{
 		NextMovementState = EMovementState::Sprinting;
 		return;
 	}
 	if (Character && Character->bIsCrouched)
 		EndCrouch();
-	
+
 	SetMovementState(EMovementState::Sprinting);
 }
 
@@ -198,9 +263,10 @@ void UAdvanceMovementComponent::StopSprinting()
 	}
 	SetMovementState(EMovementState::Running);
 }
+
 void UAdvanceMovementComponent::StartWalking()
 {
-	if(Character && Character->GetCharacterMovement()->IsFalling())
+	if (Character && Character->GetCharacterMovement()->IsFalling())
 	{
 		NextMovementState = EMovementState::Walking;
 		return;
@@ -217,33 +283,41 @@ void UAdvanceMovementComponent::StopWalking()
 	}
 	SetMovementState(EMovementState::Running);
 }
+
 void UAdvanceMovementComponent::StartCrouch()
 {
-	if(Character && Character->GetCharacterMovement()->IsFalling()) return;
-	if(Character) Character->Crouch();
+	if (Character && Character->GetCharacterMovement()->IsFalling()) return;
+	if (Character) Character->Crouch();
 }
 
 void UAdvanceMovementComponent::EndCrouch()
 {
-	if(Character) Character->UnCrouch();
+	if (Character) Character->UnCrouch();
 }
+
 void UAdvanceMovementComponent::StartJump()
 {
-	if(Character && GetMovementState() != EMovementState::Mantling)
+	if (Character && GetMovementState() != EMovementState::Mantling && GetMovementState() != EMovementState::Vaulting)
 	{
-		Character->Jump();
-		if (MovementState != EMovementState::Jumping && MovementState != EMovementState::Mantling && MovementState != EMovementState::Vaulting)
+		if(GetMovementState()!=EMovementState::Jumping)
+			VaultCheck();
+		
+		if (MovementState != EMovementState::Jumping && MovementState != EMovementState::Mantling && MovementState !=
+			EMovementState::Vaulting)
+		{
+			Character->Jump();
 			PlayCameraShake(LandingShake);
-		SetMovementState(EMovementState::Jumping);
-
-		MantleCheck();
+			SetMovementState(EMovementState::Jumping);
+		}
+		if(GetMovementState()!=EMovementState::Vaulting)
+			MantleCheck();
 	}
 }
 
 void UAdvanceMovementComponent::PlayCameraShake(TSubclassOf<UCameraShakeBase> Shake)
 {
-	if(Character && Character->AreCameraShakesActive())
+	if (Character && Shake && Character->AreCameraShakesActive())
 	{
-		UGameplayStatics::PlayWorldCameraShake(GetWorld(), Shake, Character->GetActorLocation(), 0,100);
+		UGameplayStatics::PlayWorldCameraShake(GetWorld(), Shake, Character->GetActorLocation(), 0, 100);
 	}
 }

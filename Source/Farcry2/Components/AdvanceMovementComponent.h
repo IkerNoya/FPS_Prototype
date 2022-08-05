@@ -37,6 +37,8 @@ protected:
 	float MantleSpeed = 10.f;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Movement|Settings")
 	float QuickMantleSpeed = 20.f;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Movement|Settings")
+	float VaultSpeed = 10.f;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement")
 	EMovementState MovementState = EMovementState::Running;
@@ -51,11 +53,15 @@ protected:
 	TSubclassOf<UCameraShakeBase> MantlingShake;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Effects")
 	TSubclassOf<UCameraShakeBase> QuickMantleShake;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Effects")
+	TSubclassOf<UCameraShakeBase> VaultShake;
 	
 	UPROPERTY(VisibleAnywhere)
 	float MantleDistance = 0;
 	UPROPERTY(VisibleAnywhere)
 	FVector MantlePosition = FVector::Zero();
+	UPROPERTY(VisibleAnywhere)
+	FVector VaultPosition;
 
 public:
 	// Sets default values for this component's properties
@@ -99,4 +105,7 @@ private:
 	bool IsQuickMantle() const;
 	void MantleStart();
 	void MantleMovement();
+	void VaultCheck();
+	void StartVault();
+	void VaultMovement();
 };
