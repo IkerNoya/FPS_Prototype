@@ -39,6 +39,7 @@ ACharacterBase::ACharacterBase()
 
 	InteractionComponent = CreateDefaultSubobject<UInteractionComponent>(TEXT("InteractionComponent"));
 	Inventory = CreateDefaultSubobject<UInventoryComponent>(TEXT("InventoryComponent"));
+	AdvanceMovementComponent = CreateDefaultSubobject<UAdvanceMovementComponent>(TEXT("AdvanceMovementComponent"));
 }
 
 void ACharacterBase::BeginPlay()
@@ -52,8 +53,7 @@ void ACharacterBase::BeginPlay()
 	{
 		Inventory->OnEquipmentAdded.AddDynamic(this, &ACharacterBase::UpdateCurrentEquipment);
 	}
-	GetCharacterMovement()->MaxWalkSpeed = RegularSpeed;
-	GetCharacterMovement()->MaxWalkSpeedCrouched = RegularCrouchSpeed;
+
 }
 
 void ACharacterBase::EndPlay(const EEndPlayReason::Type EndPlayReason)
@@ -67,40 +67,6 @@ void ACharacterBase::EndPlay(const EEndPlayReason::Type EndPlayReason)
 		Inventory->OnEquipmentAdded.RemoveDynamic(this, &ACharacterBase::UpdateCurrentEquipment);
 	}
 	Super::EndPlay(EndPlayReason);
-}
-
-void ACharacterBase::SetMovementState(EMovementState State)
-{
-	PrevMovementState = MovementState;
-	switch (State) {
-	case EMovementState::Walking:
-		HandleSpeedChange(WalkingSpeed);
-		break;
-	case EMovementState::Running:
-		HandleSpeedChange(RegularSpeed);
-		break;
-	case EMovementState::Sprinting:
-		HandleSpeedChange(SprintingSpeed);
-	 break;
-	case EMovementState::Jumping:
-		{
-			switch (PrevMovementState) {
-			case EMovementState::Walking:
-				NextMovementState = EMovementState::Walking;
-				break;
-			case EMovementState::Running:
-				NextMovementState = EMovementState::Running;
-				break;
-			case EMovementState::Sprinting:
-				NextMovementState = EMovementState::Sprinting;
-				break;
-			default: ;
-			}
-		}
-		break;
-	default: ;
-	}
-	MovementState = State;
 }
 
 void ACharacterBase::UpdateCurrentEquipment(int32 Slot)
@@ -208,91 +174,22 @@ void ACharacterBase::LookUpAtRate(float Rate)
 	AddControllerPitchInput(Rate * TurnRateGamepad * GetWorld()->GetDeltaSeconds());
 }
 
-void ACharacterBase::StartSprinting()
-{
-	if(GetCharacterMovement()->IsFalling())
-	{
-		NextMovementState = EMovementState::Sprinting;
-		return;
-	}
-	if (bIsCrouched)
-		EndCrouch();
-	SetMovementState(EMovementState::Sprinting);
-}
-
-void ACharacterBase::StopSprinting()
-{
-	if (MovementState != EMovementState::Sprinting)
-	{
-		NextMovementState = EMovementState::Running;
-		return;
-	}
-	SetMovementState(EMovementState::Running);
-}
-
-void ACharacterBase::StartWalking()
-{
-	if(GetCharacterMovement()->IsFalling())
-	{
-		NextMovementState = EMovementState::Walking;
-		return;
-	}
-	SetMovementState(EMovementState::Walking);
-}
-
-void ACharacterBase::StopWalking()
-{
-	if (MovementState != EMovementState::Walking)
-	{
-		NextMovementState = EMovementState::Running;
-		return;
-	}
-	SetMovementState(EMovementState::Running);
-}
-
-void ACharacterBase::StartCrouch()
-{
-	if(GetCharacterMovement()->IsFalling()) return;
-	Crouch();
-}
-
-void ACharacterBase::EndCrouch()
-{
-	UnCrouch();
-}
-
-void ACharacterBase::StartJump()
-{
-	Jump();
-	SetMovementState(EMovementState::Jumping);
-}
 
 void ACharacterBase::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	if(GetMovementState() == EMovementState::Jumping && !GetCharacterMovement()->IsFalling())
-			SetMovementState(NextMovementState);
+	
 }
 
 void ACharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
 	check(PlayerInputComponent);
 
-	PlayerInputComponent->BindAction("Jump", IE_Pressed, this, &ACharacterBase::StartJump);
-	PlayerInputComponent->BindAction("Jump", IE_Released, this, &ACharacter::StopJumping);
-
+	if(AdvanceMovementComponent)
+		AdvanceMovementComponent->InitializeInputs(PlayerInputComponent, this);
+	
 	PlayerInputComponent->BindAction("OpenInventory", IE_Pressed, this, &ACharacterBase::ToggleInventory);
-
-	PlayerInputComponent->BindAction("Crouch", IE_Pressed, this, &ACharacterBase::StartCrouch);
-	PlayerInputComponent->BindAction("Sprint", IE_Pressed, this, &ACharacterBase::StartSprinting);
-	PlayerInputComponent->BindAction("Walk", IE_Pressed, this, &ACharacterBase::StartWalking);
-
-	PlayerInputComponent->BindAction("Crouch", IE_Released, this, &ACharacterBase::EndCrouch);
-	PlayerInputComponent->BindAction("Sprint", IE_Released, this, &ACharacterBase::StopSprinting);
-	PlayerInputComponent->BindAction("Walk", IE_Released, this, &ACharacterBase::StopWalking);
-
 	PlayerInputComponent->BindAction("PrimaryAction", IE_Pressed, this, &ACharacterBase::OnAttack);
-
 	PlayerInputComponent->BindAction("Interact", IE_Pressed, this, &ACharacterBase::Interact);
 
 	PlayerInputComponent->BindAxis("Move Forward / Backward", this, &ACharacterBase::MoveForward);

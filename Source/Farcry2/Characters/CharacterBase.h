@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Components/AdvanceMovementComponent.h"
 #include "Components/InteractionComponent.h"
 #include "Components/InventoryComponent.h"
 #include "GameFramework/Character.h"
@@ -12,12 +13,6 @@ class USceneComponent;
 class UCameraComponent;
 class UAnimMontage;
 class USoundBase;
-
-UENUM(BlueprintType)
-enum class EMovementState : uint8
-{
-	None, Walking, Running, Sprinting, Jumping, Mantling, Vaulting, Sliding
-};
 
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnItemAction);
@@ -35,26 +30,14 @@ protected:
 	UInteractionComponent* InteractionComponent;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components | Custom")
 	UInventoryComponent* Inventory;
-	
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement")
-	EMovementState MovementState = EMovementState::Running;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement")
-	EMovementState PrevMovementState = EMovementState::Running;
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement")
-	EMovementState NextMovementState = EMovementState::Running;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Movement")
-	float RegularSpeed = 400.f;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Movement")
-	float RegularCrouchSpeed = 250.f;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Movement")
-	float WalkingSpeed = 200.f;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Movement")
-	float SprintingSpeed = 500.f;
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Movement")
-	float ProneSpeed = 100.f;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components | Custom")
+	UAdvanceMovementComponent* AdvanceMovementComponent;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Camera")
 	float TurnRateGamepad;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
+	bool bEnableCameraShakes = true;
 
 private:
 	UPROPERTY(VisibleAnywhere)
@@ -83,22 +66,14 @@ protected:
 	void TurnAtRate(float Rate);
 	void LookUpAtRate(float Rate);
 	
-	void StartSprinting();
-	void StopSprinting();
-	
-	void StartWalking();
-	void StopWalking();
-	
-	void StartCrouch();
-	void EndCrouch();
-
-	void StartJump();
-
 	UFUNCTION(BlueprintImplementableEvent)
 	void ToggleInventory();
+	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
+	void PlayCameraShake(TSubclassOf<UCameraShakeBase> Shake);
+public:	
 	UFUNCTION(BlueprintImplementableEvent)
 	void HandleSpeedChange(float NewSpeed);
-public:	
+	
 	virtual void Tick(float DeltaTime) override;
 
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
@@ -109,11 +84,7 @@ public:
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	FORCEINLINE AItemBase* GetEquippedItem() const { return EquippedItem; }
 	UFUNCTION(BlueprintCallable, BlueprintPure)
-	FORCEINLINE EMovementState GetMovementState() const { return MovementState; }
-	UFUNCTION(BlueprintCallable, BlueprintPure)
-	FORCEINLINE EMovementState GetPreviousMovementState() const { return PrevMovementState; }
-	UFUNCTION(BlueprintCallable)
-	void SetMovementState(EMovementState State);
+	FORCEINLINE bool AreCameraShakesActive() const { return bEnableCameraShakes; }
 	
 
 private:
