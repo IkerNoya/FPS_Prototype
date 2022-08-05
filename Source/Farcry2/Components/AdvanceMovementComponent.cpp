@@ -203,16 +203,13 @@ void UAdvanceMovementComponent::VaultCheck()
 		                                                                  WallLocation + WallForward, QueryParams))
 		{
 			FVector NewWallForward = NormalRotator.Vector() * -50.f;
-			FVector WallHeight = SecondHit.Location;
-			if ((WallHeight - WallLocation).Z > 60)
-			{
+			if ((SecondHit.Location - WallLocation).Z > 60)
 				return;
-			}
+			
 			if (FHitResult ThirdHit; GetWorld()->LineTraceSingleByObjectType(ThirdHit, WallLocation + NewWallForward + FVector(0, 0, 250),
 			                                                                 WallLocation + NewWallForward - FVector(0, 0, 50), QueryParams))
-			{
 				return;
-			}
+			
 		}
 		VaultPosition = WallLocation + CharacterForward;
 		StartVault();
