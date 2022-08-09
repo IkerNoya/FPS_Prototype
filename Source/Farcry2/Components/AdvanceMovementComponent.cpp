@@ -28,10 +28,13 @@ void UAdvanceMovementComponent::BeginPlay()
 	if (auto* Owner = Cast<ACharacterBase>(GetOwner()))
 	{
 		Character = Owner;
+		CharacterMovement = Character->GetCharacterMovement();
 	}
-	if (!Character) return;
-	Character->GetCharacterMovement()->MaxWalkSpeed = RegularSpeed;
-	Character->GetCharacterMovement()->MaxWalkSpeedCrouched = RegularCrouchSpeed;
+	if (!Character || !CharacterMovement) return;
+	CharacterMovement->MaxWalkSpeed = RegularSpeed;
+	CharacterMovement->MaxWalkSpeedCrouched = RegularCrouchSpeed;
+	OriginalGroundFriction = CharacterMovement->GroundFriction;
+	OriginalBrakingDecelerationWalking = CharacterMovement->BrakingDecelerationWalking;
 	// ...
 }
 
@@ -42,6 +45,8 @@ void UAdvanceMovementComponent::TickComponent(float DeltaTime, ELevelTick TickTy
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 	if (!Character)return;
+	bool bFalling = CharacterMovement->IsFalling();
+	UE_LOG(LogTemp, Warning, TEXT("Is Falling = %s"), bFalling ? TEXT("True") : TEXT("False"));
 	switch (GetMovementState())
 	{
 	case EMovementState::Sprinting:
@@ -51,7 +56,7 @@ void UAdvanceMovementComponent::TickComponent(float DeltaTime, ELevelTick TickTy
 		}
 		break;
 	case EMovementState::Jumping:
-		if (!Character->GetCharacterMovement()->IsFalling())
+		if (!CharacterMovement->IsFalling())
 		{
 			PlayCameraShake(LandingShake);
 			SetMovementState(NextMovementState);
@@ -62,6 +67,10 @@ void UAdvanceMovementComponent::TickComponent(float DeltaTime, ELevelTick TickTy
 		break;
 	case EMovementState::Vaulting:
 		VaultMovement();
+		break;
+	case EMovementState::Sliding:
+		SlideUpdate();
+		break;
 	default: ;
 	}
 	// ...
@@ -89,17 +98,20 @@ void UAdvanceMovementComponent::SetMovementState(EMovementState State)
 	switch (State)
 	{
 	case EMovementState::Walking:
+		ResetMovementValues();
 		Character->HandleSpeedChange(WalkingSpeed);
 		break;
 	case EMovementState::Running:
+		ResetMovementValues();
 		Character->HandleSpeedChange(RegularSpeed);
 		break;
 	case EMovementState::Sprinting:
+		ResetMovementValues();
 		Character->HandleSpeedChange(SprintingSpeed);
 		break;
 	default: ;
 	}
-	if(State == EMovementState::Jumping || State == EMovementState::Mantling || State == EMovementState::Vaulting)
+	if(State == EMovementState::Jumping || State == EMovementState::Mantling || State == EMovementState::Vaulting || State == EMovementState::Sliding)
 	{
 		switch (PrevMovementState)
 		{
@@ -124,7 +136,7 @@ float UAdvanceMovementComponent::GetForwardInput() const
 		return 0.f;
 
 	return FVector::DotProduct(Character->GetActorForwardVector(),
-	                           Character->GetCharacterMovement()->GetLastInputVector());
+	                           CharacterMovement->GetLastInputVector());
 }
 
 void UAdvanceMovementComponent::MantleCheck()
@@ -143,7 +155,7 @@ void UAdvanceMovementComponent::MantleCheck()
 	if (GetWorld()->SweepSingleByChannel(Hit, EyesLocation, FeetLocation, quat, ECC_Visibility, Shape))
 	{
 		MantleDistance = Hit.Distance;
-		if (Character->GetCharacterMovement()->IsWalkable(Hit))
+		if (CharacterMovement->IsWalkable(Hit))
 		{
 			MantlePosition = Hit.ImpactPoint + FVector(
 				0, 0, Character->GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight());
@@ -161,23 +173,26 @@ void UAdvanceMovementComponent::MantleStart()
 {
 	SetMovementState(EMovementState::Mantling);
 	PlayCameraShake(MantlingShake);
-	Character->GetCharacterMovement()->StopMovementImmediately();
-	Character->GetCharacterMovement()->DisableMovement();
+	CharacterMovement->StopMovementImmediately();
+	CharacterMovement->DisableMovement();
 }
 
 void UAdvanceMovementComponent::MantleMovement()
 {
+#pragma region CameraRotation
 	// FRotator CurrentRotation = Character->GetController()->GetControlRotation();
 	// FVector ActorLocation = FVector(Character->GetActorLocation().X, Character->GetActorLocation().Y, 0);
 	// FVector MantleLocation = FVector(MantlePosition.X, MantlePosition.Y, 0);
 	// FRotator TargetRotation = UKismetMathLibrary::FindLookAtRotation(ActorLocation, MantleLocation);	
 	// Character->GetController()->SetControlRotation(FMath::RInterpTo(CurrentRotation, TargetRotation, GetWorld()->GetDeltaSeconds(), 7.f));
+#pragma endregion
+	
 	float Speed = IsQuickMantle() ? QuickMantleSpeed : MantleSpeed;
 	Character->SetActorLocation(FMath::VInterpTo(Character->GetActorLocation(), MantlePosition,
 	                                             GetWorld()->GetDeltaSeconds(), Speed));
 	if (FVector::Distance(Character->GetActorLocation(), MantlePosition) < 8)
 	{
-		Character->GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
+		CharacterMovement->SetMovementMode(EMovementMode::MOVE_Walking);
 		SetMovementState(NextMovementState);
 	}
 }
@@ -220,8 +235,8 @@ void UAdvanceMovementComponent::StartVault()
 {
 	SetMovementState(EMovementState::Vaulting);
 	PlayCameraShake(VaultShake);
-	Character->GetCharacterMovement()->StopMovementImmediately();
-	Character->GetCharacterMovement()->DisableMovement();
+	CharacterMovement->StopMovementImmediately();
+	CharacterMovement->DisableMovement();
 	Character->GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
@@ -231,10 +246,52 @@ void UAdvanceMovementComponent::VaultMovement()
 	                                             GetWorld()->GetDeltaSeconds(), VaultSpeed));
 	if (FVector::Distance(Character->GetActorLocation(), VaultPosition) < 8)
 	{
-		Character->GetCharacterMovement()->SetMovementMode(EMovementMode::MOVE_Walking);
+		CharacterMovement->SetMovementMode(EMovementMode::MOVE_Walking);
 		SetMovementState(NextMovementState);
 		Character->GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	}
+}
+
+void UAdvanceMovementComponent::StartSlide()
+{
+	Character->Crouch();
+	CharacterMovement->GroundFriction = 0.f;
+	CharacterMovement->BrakingDecelerationWalking = 1400.f;
+	CharacterMovement->MaxWalkSpeedCrouched = 0;
+	FVector Velocity = CharacterMovement->Velocity;
+	CharacterMovement->SetPlaneConstraintFromVectors(Velocity, Character->GetActorUpVector());
+	CharacterMovement->SetPlaneConstraintEnabled(true);
+	FHitResult Hit;
+	GetWorld()->LineTraceSingleByChannel(Hit, Character->GetActorLocation(), Character->GetActorLocation()+( Character->GetActorUpVector() * -200.f), ECC_Visibility);
+	FVector Normal = FVector::CrossProduct(Hit.ImpactNormal, Character->GetActorRightVector());
+	Normal *= -1.f;
+	if(Normal.Z <= .02f)
+	{
+		CharacterMovement->AddImpulse(Normal * SlideImpulseForce, true);
+	}
+		SetMovementState(EMovementState::Sliding);
+}
+
+void UAdvanceMovementComponent::SlideUpdate()
+{
+	if(CharacterMovement->IsFalling())
+	{
+		SetMovementState(EMovementState::Jumping);
+		return;
+	}
+
+	if(CharacterMovement->Velocity.Length() <= 35.f)
+	{
+		SetMovementState(NextMovementState);
+	}
+}
+
+void UAdvanceMovementComponent::ResetMovementValues()
+{
+	CharacterMovement->MaxWalkSpeedCrouched = RegularCrouchSpeed;
+	CharacterMovement->GroundFriction = OriginalGroundFriction;
+	CharacterMovement->BrakingDecelerationWalking = OriginalBrakingDecelerationWalking;
+	CharacterMovement->SetPlaneConstraintEnabled(false);
 }
 
 void UAdvanceMovementComponent::StartSprinting()
@@ -284,12 +341,30 @@ void UAdvanceMovementComponent::StopWalking()
 void UAdvanceMovementComponent::StartCrouch()
 {
 	if (Character && Character->GetCharacterMovement()->IsFalling()) return;
-	if (Character) Character->Crouch();
+	if (Character)
+	{
+		switch (GetMovementState()) { 
+		case EMovementState::Walking:
+			Character->Crouch();	
+			break;
+		case EMovementState::Running:
+			Character->Crouch();
+			break;
+		case EMovementState::Sprinting:
+			StartSlide();
+			break;
+		default: ;
+		}
+	}
 }
 
 void UAdvanceMovementComponent::EndCrouch()
 {
-	if (Character) Character->UnCrouch();
+	if (!Character)return;
+	if(GetMovementState()!=EMovementState::Sliding)
+		Character->UnCrouch();
+	else
+		NextMovementState = EMovementState::Walking;
 }
 
 void UAdvanceMovementComponent::StartJump()
@@ -302,9 +377,17 @@ void UAdvanceMovementComponent::StartJump()
 		if (MovementState != EMovementState::Jumping && MovementState != EMovementState::Mantling && MovementState !=
 			EMovementState::Vaulting)
 		{
-			Character->Jump();
-			PlayCameraShake(LandingShake);
-			SetMovementState(EMovementState::Jumping);
+			if(Character->bIsCrouched)
+			{
+				Character->UnCrouch();
+				SetMovementState(EMovementState::Running);
+			}
+			else
+			{
+				Character->Jump();
+				PlayCameraShake(LandingShake);
+				SetMovementState(EMovementState::Jumping);
+			}
 		}
 		if(GetMovementState()!=EMovementState::Vaulting)
 			MantleCheck();

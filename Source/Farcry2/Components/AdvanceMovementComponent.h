@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "AdvanceMovementComponent.generated.h"
 
 UENUM(BlueprintType)
@@ -39,6 +40,8 @@ protected:
 	float QuickMantleSpeed = 20.f;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Movement|Settings")
 	float VaultSpeed = 10.f;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Movement|Settings")
+	float SlideImpulseForce = 600.f;
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement")
 	EMovementState MovementState = EMovementState::Running;
@@ -62,7 +65,13 @@ protected:
 	FVector MantlePosition = FVector::Zero();
 	UPROPERTY(VisibleAnywhere)
 	FVector VaultPosition;
-
+	
+private:
+	float OriginalGroundFriction;
+	float OriginalBrakingDecelerationWalking;
+	UPROPERTY()
+	UCharacterMovementComponent* CharacterMovement = nullptr;
+	
 public:
 	// Sets default values for this component's properties
 	UAdvanceMovementComponent();
@@ -101,11 +110,18 @@ public:
 
 private:
 	float GetForwardInput()const;
+	//Mantling
 	void MantleCheck();
 	bool IsQuickMantle() const;
 	void MantleStart();
 	void MantleMovement();
+	//Vaulting
 	void VaultCheck();
 	void StartVault();
 	void VaultMovement();
+	//Sliding
+	void StartSlide();
+	void SlideUpdate();
+
+	void ResetMovementValues();
 };
