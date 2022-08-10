@@ -55,11 +55,15 @@ protected:
 private:
 	UPROPERTY(VisibleAnywhere)
 	AItemBase* EquippedItem = nullptr;
-
+	bool bIsAiming = false;
 	
 public:
 	UPROPERTY(BlueprintAssignable)
 	FOnItemAction OnItemAction;
+	FOnItemAction OnItemSecondaryAction;
+	FOnItemAction OnReload;
+	FOnItemAction OnMelee;
+	FOnItemAction OnInspection;
 	
 	ACharacterBase();
 	
@@ -68,6 +72,11 @@ protected:
 	virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
 	void OnAttack();
+	void OnSecondaryAction();
+	void OnEndSecondaryAction();
+	void OnWeaponReload();
+	void OnItemInspect();
+	void OnItemMelee();
 	void Interact();
 	
 	UFUNCTION()
@@ -106,7 +115,8 @@ public:
 	FORCEINLINE AItemBase* GetEquippedItem() const { return EquippedItem; }
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	FORCEINLINE bool AreCameraShakesActive() const { return bEnableCameraShakes; }
-
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	FORCEINLINE bool IsAiming() const {return bIsAiming;}
 	
 
 private:

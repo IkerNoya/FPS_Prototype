@@ -87,6 +87,57 @@ void ACharacterBase::OnAttack()
 	}
 }
 
+void ACharacterBase::OnSecondaryAction()
+{
+	if(AdvanceMovementComponent->AreHandsBlocked()) return;
+	bIsAiming = true;
+	AdvanceMovementComponent->SetMovementState(EMovementState::Walking);
+	AdvanceMovementComponent->ShouldBlockAdvanceMovement(true);
+	if (OnItemSecondaryAction.IsBound())
+	{
+		OnItemSecondaryAction.Broadcast();
+	}
+}
+
+void ACharacterBase::OnEndSecondaryAction()
+{
+	if(AdvanceMovementComponent->AreHandsBlocked()) return;
+	bIsAiming = false;
+	AdvanceMovementComponent->SetMovementState(EMovementState::Running);
+	AdvanceMovementComponent->ShouldBlockAdvanceMovement(false);
+	if (OnItemSecondaryAction.IsBound())
+	{
+		OnItemSecondaryAction.Broadcast();
+	}
+}
+
+void ACharacterBase::OnWeaponReload()
+{
+	if(AdvanceMovementComponent->AreHandsBlocked()) return;
+	if (OnReload.IsBound())
+	{
+		OnReload.Broadcast();
+	}
+}
+
+void ACharacterBase::OnItemInspect()
+{
+	if(AdvanceMovementComponent->AreHandsBlocked()) return;
+	if (OnInspection.IsBound())
+	{
+		OnInspection.Broadcast();
+	}
+}
+
+void ACharacterBase::OnItemMelee()
+{
+	if(AdvanceMovementComponent->AreHandsBlocked()) return;
+	if (OnMelee.IsBound())
+	{
+		OnMelee.Broadcast();
+	}
+}
+
 void ACharacterBase::Interact()
 {
 	if (InteractionComponent)
@@ -219,7 +270,14 @@ void ACharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 		AdvanceMovementComponent->InitializeInputs(PlayerInputComponent, this);
 	
 	PlayerInputComponent->BindAction("OpenInventory", IE_Pressed, this, &ACharacterBase::ToggleInventory);
+	
 	PlayerInputComponent->BindAction("PrimaryAction", IE_Pressed, this, &ACharacterBase::OnAttack);
+	PlayerInputComponent->BindAction("SecondaryAction", IE_Pressed, this, &ACharacterBase::OnSecondaryAction);
+	PlayerInputComponent->BindAction("SecondaryAction", IE_Released, this, &ACharacterBase::OnEndSecondaryAction);
+	PlayerInputComponent->BindAction("Reload", IE_Pressed, this, &ACharacterBase::OnWeaponReload);
+	PlayerInputComponent->BindAction("Inspect", IE_Pressed, this, &ACharacterBase::OnItemInspect);
+	PlayerInputComponent->BindAction("Melee", IE_Pressed, this, &ACharacterBase::OnItemMelee);
+	
 	PlayerInputComponent->BindAction("Interact", IE_Pressed, this, &ACharacterBase::Interact);
 	
 	PlayerInputComponent->BindAction("LeanRight", IE_Pressed, this, &ACharacterBase::LeanRight);

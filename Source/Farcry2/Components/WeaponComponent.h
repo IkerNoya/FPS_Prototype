@@ -20,8 +20,22 @@ public:
 	TSubclassOf<class AFarcry2Projectile> ProjectileClass;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Gameplay|Audio")
 	USoundBase* FireSound;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Gameplay|Audio")
+	USoundBase* ReloadSound;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Gameplay|Animation")
 	UAnimMontage* FireAnimation;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Gameplay|Animation")
+	UAnimMontage* AimFireAnimation;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Gameplay|Animation")
+	UAnimSequenceBase* EquipMontage;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Gameplay|Animation")
+	UAnimSequenceBase* UnequipMontage;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Gameplay|Animation")
+	UAnimSequenceBase* ReloadMontage;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Gameplay|Animation")
+	UAnimSequenceBase* ReloadEmptyMontage;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Gameplay|Animation")
+	UAnimSequenceBase* InspectMontage;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Gameplay")
 	FVector MuzzleOffset;
 
@@ -33,6 +47,10 @@ public:
 	//Move to gameplay tags in the future
 	UFUNCTION(BlueprintCallable, Category = "Weapon")
 	void Fire();
+	UFUNCTION(BlueprintCallable, Category = "Weapon")
+	void Reload();
+	UFUNCTION(BlueprintCallable, Category = "Weapon")
+	void InspectWeapon();
 	
 protected:
 	UFUNCTION()

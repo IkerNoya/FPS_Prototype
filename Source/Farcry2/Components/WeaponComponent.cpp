@@ -27,8 +27,17 @@ void UWeaponComponent::AttachWeapon(ACharacterBase* TargetCharacter)
 	if(Character)
 	{
 		FAttachmentTransformRules AttachmentRules(EAttachmentRule::SnapToTarget, true);
-		GetOwner()->AttachToComponent(Character->GetMesh1P(), AttachmentRules, FName(TEXT("GripPoint")));
+		GetOwner()->AttachToComponent(Character->GetMesh1P(), AttachmentRules, FName(TEXT("gun")));
 		Character->OnItemAction.AddDynamic(this, &UWeaponComponent::Fire);
+		Character->OnReload.AddDynamic(this, &UWeaponComponent::Reload);
+		Character->OnInspection.AddDynamic(this, &UWeaponComponent::InspectWeapon);
+		if(EquipMontage)
+		{
+			if(auto* AnimInstance = Character->GetMesh1P()->GetAnimInstance())
+			{
+				AnimInstance->PlaySlotAnimationAsDynamicMontage(EquipMontage, "DefaultSlot");
+			}
+		}
 	}
 }
 
@@ -56,13 +65,39 @@ void UWeaponComponent::Fire()
 	{
 		UGameplayStatics::PlaySoundAtLocation(this, FireSound, Character->GetActorLocation());
 	}
-
-	if(FireAnimation)
+	if(Character->IsAiming())
 	{
-		if(auto* AnimInstance = Character->GetMesh1P()->GetAnimInstance())
+		if(AimFireAnimation)
 		{
-			AnimInstance->Montage_Play(FireAnimation, 1.f);
+			if(auto* AnimInstance = Character->GetMesh1P()->GetAnimInstance())
+			{
+				AnimInstance->Montage_Play(AimFireAnimation, 1.f);
+				AnimInstance->Montage_SetNextSection("Loop", "Tail", AimFireAnimation);
+			}
 		}
+	}
+	else
+	{
+		if(FireAnimation)
+		{
+			if(auto* AnimInstance = Character->GetMesh1P()->GetAnimInstance())
+			{
+				AnimInstance->Montage_Play(FireAnimation, 1.f);
+				AnimInstance->Montage_SetNextSection("Loop", "Tail", FireAnimation);
+			}
+		}
+	}
+}
+
+void UWeaponComponent::Reload()
+{
+}
+
+void UWeaponComponent::InspectWeapon()
+{
+	if(auto* AnimInstance = Character->GetMesh1P()->GetAnimInstance())
+	{
+		AnimInstance->PlaySlotAnimationAsDynamicMontage(InspectMontage, "DefaultSlot");
 	}
 }
 
@@ -72,6 +107,9 @@ void UWeaponComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 	{
 		// Unregister from the OnUseItem Event
 		Character->OnItemAction.RemoveDynamic(this, &UWeaponComponent::Fire);
+		Character->OnReload.RemoveDynamic(this, &UWeaponComponent::Reload);
+		Character->OnInspection.RemoveDynamic(this, &UWeaponComponent::InspectWeapon);
+
 	}
 }
 
