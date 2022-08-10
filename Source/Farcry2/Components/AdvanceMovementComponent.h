@@ -65,6 +65,9 @@ protected:
 	FVector MantlePosition = FVector::Zero();
 	UPROPERTY(VisibleAnywhere)
 	FVector VaultPosition;
+
+	bool bBlockAdvanceMovement = false;
+
 	
 private:
 	float OriginalGroundFriction;
@@ -107,6 +110,14 @@ public:
 	FORCEINLINE EMovementState GetPreviousMovementState() const { return PrevMovementState; }
 	UFUNCTION(BlueprintCallable)
 	void SetMovementState(EMovementState State);
+	UFUNCTION(BlueprintCallable, BlueprintPure)
+	FORCEINLINE bool IsBlockingAdvanceMovement() const { return bBlockAdvanceMovement; }
+	UFUNCTION(BlueprintCallable)
+	void ShouldBlockAdvanceMovement(bool Value);
+	UFUNCTION(BlueprintCallable)
+	bool IsDoingAdvanceMovement() const;
+	UFUNCTION(BlueprintCallable)
+	bool AreHandsBlocked() const;
 
 private:
 	float GetForwardInput()const;

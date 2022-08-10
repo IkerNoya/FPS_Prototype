@@ -9,19 +9,11 @@
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetMathLibrary.h"
 
-
-// Sets default values for this component's properties
 UAdvanceMovementComponent::UAdvanceMovementComponent()
 {
-	// Set this component to be initialized when the game starts, and to be ticked every frame.  You can turn these features
-	// off to improve performance if you don't need them.
 	PrimaryComponentTick.bCanEverTick = true;
-
-	// ...
 }
 
-
-// Called when the game starts
 void UAdvanceMovementComponent::BeginPlay()
 {
 	Super::BeginPlay();
@@ -35,22 +27,17 @@ void UAdvanceMovementComponent::BeginPlay()
 	CharacterMovement->MaxWalkSpeedCrouched = RegularCrouchSpeed;
 	OriginalGroundFriction = CharacterMovement->GroundFriction;
 	OriginalBrakingDecelerationWalking = CharacterMovement->BrakingDecelerationWalking;
-	// ...
 }
 
-
-// Called every frame
 void UAdvanceMovementComponent::TickComponent(float DeltaTime, ELevelTick TickType,
                                               FActorComponentTickFunction* ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
 	if (!Character)return;
-	bool bFalling = CharacterMovement->IsFalling();
-	UE_LOG(LogTemp, Warning, TEXT("Is Falling = %s"), bFalling ? TEXT("True") : TEXT("False"));
 	switch (GetMovementState())
 	{
 	case EMovementState::Sprinting:
-		if (GetForwardInput() <= 0)
+		if (GetForwardInput() <= 0 || bBlockAdvanceMovement)
 		{
 			StopSprinting();
 		}
@@ -130,6 +117,23 @@ void UAdvanceMovementComponent::SetMovementState(EMovementState State)
 	MovementState = State;
 }
 
+void UAdvanceMovementComponent::ShouldBlockAdvanceMovement(bool Value)
+{
+	bBlockAdvanceMovement=Value;
+}
+
+bool UAdvanceMovementComponent::IsDoingAdvanceMovement() const
+{
+	return GetMovementState() == EMovementState::Jumping || GetMovementState() == EMovementState::Vaulting
+			|| GetMovementState() == EMovementState::Sliding || GetMovementState() == EMovementState::Mantling
+			|| GetMovementState() == EMovementState::Sprinting;
+}
+
+bool UAdvanceMovementComponent::AreHandsBlocked() const
+{
+	return GetMovementState() == EMovementState::Mantling  || GetMovementState() == EMovementState::Vaulting;
+}
+
 float UAdvanceMovementComponent::GetForwardInput() const
 {
 	if (!Character)
@@ -148,11 +152,10 @@ void UAdvanceMovementComponent::MantleCheck()
 	FVector FeetLocation = Character->GetActorLocation() + FVector(
 		0, 0, Character->GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight() - MantleHeight);
 	FeetLocation += Character->GetActorForwardVector() * 100.f;
-	FQuat quat;
-	FHitResult Hit;
+	FQuat Quat;
 	FCollisionShape Shape;
 	Shape.MakeCapsule(20, 10);
-	if (GetWorld()->SweepSingleByChannel(Hit, EyesLocation, FeetLocation, quat, ECC_Visibility, Shape))
+	if (FHitResult Hit; GetWorld()->SweepSingleByChannel(Hit, EyesLocation, FeetLocation, Quat, ECC_Visibility, Shape))
 	{
 		MantleDistance = Hit.Distance;
 		if (CharacterMovement->IsWalkable(Hit))
@@ -296,13 +299,14 @@ void UAdvanceMovementComponent::ResetMovementValues()
 
 void UAdvanceMovementComponent::StartSprinting()
 {
-	if (GetForwardInput() <= 0) return;
-	if (Character && Character->GetCharacterMovement()->IsFalling())
+	if (!Character || GetForwardInput() <= 0) return;
+	
+	if (Character->GetCharacterMovement()->IsFalling() || bBlockAdvanceMovement)
 	{
 		NextMovementState = EMovementState::Sprinting;
 		return;
 	}
-	if (Character && Character->bIsCrouched)
+	if (Character->bIsCrouched)
 		EndCrouch();
 
 	SetMovementState(EMovementState::Sprinting);
@@ -369,6 +373,8 @@ void UAdvanceMovementComponent::EndCrouch()
 
 void UAdvanceMovementComponent::StartJump()
 {
+	if(bBlockAdvanceMovement) return;
+	
 	if (Character && GetMovementState() != EMovementState::Mantling && GetMovementState() != EMovementState::Vaulting)
 	{
 		if(GetMovementState()!=EMovementState::Jumping)

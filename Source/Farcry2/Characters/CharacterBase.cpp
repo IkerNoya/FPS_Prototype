@@ -20,8 +20,11 @@ ACharacterBase::ACharacterBase()
 
 	TurnRateGamepad = 45.f;
 
+	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
+	SpringArm->SetupAttachment(GetCapsuleComponent());
+
 	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("FPCamera"));
-	Camera->SetupAttachment(GetCapsuleComponent());
+	Camera->SetupAttachment(SpringArm);
 	Camera->SetRelativeLocation(FVector(-39.56f, 1.75f, 64.f));
 	Camera->bUsePawnControlRotation = true;
 
@@ -33,9 +36,9 @@ ACharacterBase::ACharacterBase()
 	Mesh1P->SetRelativeRotation(FRotator(1.9f, -19.19f, 5.2f));
 	Mesh1P->SetRelativeLocation(FVector(-0.5f, -4.4f, -155.7f));
 
-	GetMesh()->SetOwnerNoSee(true);
 	GetMesh()->bCastDynamicShadow = true;
 	GetMesh()->CastShadow = true;
+	GetMesh()->SetOwnerNoSee(true);
 
 	InteractionComponent = CreateDefaultSubobject<UInteractionComponent>(TEXT("InteractionComponent"));
 	Inventory = CreateDefaultSubobject<UInventoryComponent>(TEXT("InventoryComponent"));
@@ -45,6 +48,7 @@ ACharacterBase::ACharacterBase()
 void ACharacterBase::BeginPlay()
 {
 	Super::BeginPlay();
+	OriginalCameraLocation = Camera->GetRelativeLocation();
 	if (InteractionComponent)
 	{
 		InteractionComponent->SendInteractedItem.AddDynamic(this, &ACharacterBase::PickUpItem);
@@ -76,6 +80,7 @@ void ACharacterBase::UpdateCurrentEquipment(int32 Slot)
 
 void ACharacterBase::OnAttack()
 {
+	if(AdvanceMovementComponent->AreHandsBlocked()) return;
 	if (OnItemAction.IsBound())
 	{
 		OnItemAction.Broadcast();
@@ -174,6 +179,31 @@ void ACharacterBase::LookUpAtRate(float Rate)
 	AddControllerPitchInput(Rate * TurnRateGamepad * GetWorld()->GetDeltaSeconds());
 }
 
+void ACharacterBase::LeanRight()
+{
+	if(AdvanceMovementComponent->IsDoingAdvanceMovement() || bIsLeaning) return;
+	AdvanceMovementComponent->ShouldBlockAdvanceMovement(true);
+	AdvanceMovementComponent->SetMovementState(EMovementState::Walking);
+	bIsLeaning = true;
+	// SpringArm->bUsePawnControlRotation=false;
+	HandleLeaning(45.f);
+}
+
+void ACharacterBase::LeanLeft()
+{
+	if(AdvanceMovementComponent->IsDoingAdvanceMovement() || bIsLeaning) return;
+	AdvanceMovementComponent->ShouldBlockAdvanceMovement(true);
+	AdvanceMovementComponent->SetMovementState(EMovementState::Walking);
+	bIsLeaning = true;
+	// SpringArm->bUsePawnControlRotation=false;
+	HandleLeaning(-45.f);
+}
+
+void ACharacterBase::StopLeaning()
+{
+	bIsLeaning=false;
+	HandleLeaning(0);
+}
 
 void ACharacterBase::Tick(float DeltaTime)
 {
@@ -191,6 +221,12 @@ void ACharacterBase::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 	PlayerInputComponent->BindAction("OpenInventory", IE_Pressed, this, &ACharacterBase::ToggleInventory);
 	PlayerInputComponent->BindAction("PrimaryAction", IE_Pressed, this, &ACharacterBase::OnAttack);
 	PlayerInputComponent->BindAction("Interact", IE_Pressed, this, &ACharacterBase::Interact);
+	
+	PlayerInputComponent->BindAction("LeanRight", IE_Pressed, this, &ACharacterBase::LeanRight);
+	PlayerInputComponent->BindAction("LeanRight", IE_Released, this, &ACharacterBase::StopLeaning);
+	
+	PlayerInputComponent->BindAction("LeanLeft", IE_Pressed, this, &ACharacterBase::LeanLeft);
+	PlayerInputComponent->BindAction("LeanLeft", IE_Released, this, &ACharacterBase::StopLeaning);
 
 	PlayerInputComponent->BindAxis("Move Forward / Backward", this, &ACharacterBase::MoveForward);
 	PlayerInputComponent->BindAxis("Move Right / Left", this, &ACharacterBase::MoveRight);

@@ -7,6 +7,7 @@
 #include "Components/InteractionComponent.h"
 #include "Components/InventoryComponent.h"
 #include "GameFramework/Character.h"
+#include "GameFramework/SpringArmComponent.h"
 #include "CharacterBase.generated.h"
 
 class USceneComponent;
@@ -22,26 +23,39 @@ class FARCRY2_API ACharacterBase : public ACharacter
 {
 	GENERATED_BODY()
 protected:
-	UPROPERTY(EditDefaultsOnly, Category = "Components")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components")
 	USkeletalMeshComponent* Mesh1P;
-	UPROPERTY(EditDefaultsOnly, Category = "Components")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components")
+	USpringArmComponent* SpringArm;
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components")
 	UCameraComponent* Camera;
-	UPROPERTY(EditDefaultsOnly, Category = "Components|Custom")
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Components|Custom")
 	UInteractionComponent* InteractionComponent;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components | Custom")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Components | Custom")
 	UInventoryComponent* Inventory;
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Components | Custom")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Components | Custom")
 	UAdvanceMovementComponent* AdvanceMovementComponent;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Camera")
 	float TurnRateGamepad;
 
+	FVector OriginalCameraLocation;
+	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
 	bool bEnableCameraShakes = true;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera|Settings")
+	float LeaningSpeed = 200.f;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera|Settings")
+	float CameraOffsetY = 100.f;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Camera|Settings")
+	float CameraOffsetZ = 30.f;
+	UPROPERTY(VisibleAnywhere, BlueprintReadWrite, Category = "Camera|Settings")
+	bool bIsLeaning = false;
 
 private:
 	UPROPERTY(VisibleAnywhere)
 	AItemBase* EquippedItem = nullptr;
+
 	
 public:
 	UPROPERTY(BlueprintAssignable)
@@ -65,14 +79,21 @@ protected:
 	void MoveRight(float Value);
 	void TurnAtRate(float Rate);
 	void LookUpAtRate(float Rate);
+	void LeanRight();
+	void LeanLeft();
+	void StopLeaning();
 	
 	UFUNCTION(BlueprintImplementableEvent)
 	void ToggleInventory();
 	UFUNCTION(BlueprintImplementableEvent, BlueprintCallable)
 	void PlayCameraShake(TSubclassOf<UCameraShakeBase> Shake);
+	UFUNCTION(BlueprintImplementableEvent)
+	void HandleLeaning(float Angle);
+	
 public:	
 	UFUNCTION(BlueprintImplementableEvent)
 	void HandleSpeedChange(float NewSpeed);
+
 	
 	virtual void Tick(float DeltaTime) override;
 
@@ -85,6 +106,7 @@ public:
 	FORCEINLINE AItemBase* GetEquippedItem() const { return EquippedItem; }
 	UFUNCTION(BlueprintCallable, BlueprintPure)
 	FORCEINLINE bool AreCameraShakesActive() const { return bEnableCameraShakes; }
+
 	
 
 private:
