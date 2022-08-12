@@ -31,6 +31,11 @@ void UWeaponComponent::AttachWeapon(ACharacterBase* TargetCharacter)
 		Character->OnItemAction.AddDynamic(this, &UWeaponComponent::Fire);
 		Character->OnReload.AddDynamic(this, &UWeaponComponent::Reload);
 		Character->OnInspection.AddDynamic(this, &UWeaponComponent::InspectWeapon);
+		
+		AWeaponBase* WeaponBase = Cast<AWeaponBase>(GetOwner());
+		if(WeaponBase) WeaponMesh = WeaponBase->GetMesh();
+		else{UE_LOG(LogTemp, Warning, TEXT("FIUUMBA"));}
+		
 		if(EquipMontage)
 		{
 			if(auto* AnimInstance = Character->GetMesh1P()->GetAnimInstance())
@@ -43,9 +48,9 @@ void UWeaponComponent::AttachWeapon(ACharacterBase* TargetCharacter)
 
 void UWeaponComponent::Fire()
 {
-	if(!Character || !Character->GetController()) return;
+	if(!Character || !Character->GetController() || bIsReloading) return;
 
-	if(ProjectileClass != nullptr)
+	if(ProjectileClass != nullptr && CurrentAmmo > 0)
 	{
 		UWorld* const World = GetWorld();
 		if(World)
@@ -58,12 +63,19 @@ void UWeaponComponent::Fire()
 			ActorSpawnParameters.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
 			
 			World->SpawnActor<AFarcry2Projectile>(ProjectileClass, SpawnLocation, SpawnRotation, ActorSpawnParameters);
+			CurrentAmmo--;
 		}
 	}
 
 	if(FireSound)
 	{
-		UGameplayStatics::PlaySoundAtLocation(this, FireSound, Character->GetActorLocation());
+		if(CurrentAmmo > 0)
+			UGameplayStatics::PlaySoundAtLocation(this, FireSound, Character->GetActorLocation());
+	}
+	if(CurrentAmmo <= 0)
+	{
+		//No ammo anim
+		return;
 	}
 	if(Character->IsAiming())
 	{
@@ -87,10 +99,46 @@ void UWeaponComponent::Fire()
 			}
 		}
 	}
+	if(WeaponMesh)
+	{
+		WeaponMesh->PlayAnimation(WeaponFireAnimation, false);
+	}
 }
 
 void UWeaponComponent::Reload()
 {
+	if(bIsReloading || CurrentAmmo >= MaxMagazineAmmo || CurrentSpareAmmo <= 0) return;
+	
+	bIsReloading=true;
+	
+	if(CurrentAmmo<=0)
+	{
+		if(ReloadEmptyMontage)
+		{
+			if(auto* AnimInstance = Character->GetMesh1P()->GetAnimInstance())
+			{
+				AnimInstance->PlaySlotAnimationAsDynamicMontage(ReloadEmptyMontage, "DefaultSlot");
+			}
+			if(WeaponMesh)
+			{
+				WeaponMesh->PlayAnimation(EmptyWeaponReloadAnimation, false);
+			}
+		}
+	}
+	else
+	{
+		if(ReloadMontage)
+		{
+			if(auto* AnimInstance = Character->GetMesh1P()->GetAnimInstance())
+			{
+				AnimInstance->PlaySlotAnimationAsDynamicMontage(ReloadMontage, "DefaultSlot");
+			}
+			if(WeaponMesh)
+			{
+				WeaponMesh->PlayAnimation(WeaponReloadAnimation, false);
+			}
+		}
+	}
 }
 
 void UWeaponComponent::InspectWeapon()
@@ -111,6 +159,18 @@ void UWeaponComponent::EndPlay(const EEndPlayReason::Type EndPlayReason)
 		Character->OnInspection.RemoveDynamic(this, &UWeaponComponent::InspectWeapon);
 
 	}
+}
+
+void UWeaponComponent::EndReload()
+{
+	bIsReloading = false;
+	int AuxAmmo = MaxMagazineAmmo - CurrentAmmo;
+	if(CurrentSpareAmmo>=MaxMagazineAmmo)
+		CurrentAmmo = MaxMagazineAmmo;
+	else
+		CurrentAmmo = CurrentSpareAmmo;
+	CurrentSpareAmmo -= AuxAmmo;
+	if(CurrentSpareAmmo < 0) CurrentSpareAmmo = 0;
 }
 
 

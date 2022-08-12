@@ -25,7 +25,8 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void DisableCollision();
-
+	UFUNCTION(BlueprintCallable)
+	FORCEINLINE USkeletalMeshComponent* GetMesh() const {return Mesh;}
 protected:
 	virtual void UseItem_Implementation() override;
 	
