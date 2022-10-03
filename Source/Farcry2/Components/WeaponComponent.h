@@ -48,6 +48,8 @@ public:
 	UAnimSequenceBase* InspectMontage;
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Gameplay")
 	FVector MuzzleOffset;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Gameplay|VFX")
+	TSubclassOf<UCameraShakeBase> WeaponShotShake;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Gameplay|Settings")
 	int CurrentAmmo = 30;
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Gameplay|Settings")

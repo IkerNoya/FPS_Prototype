@@ -103,6 +103,10 @@ void UWeaponComponent::Fire()
 	{
 		WeaponMesh->PlayAnimation(WeaponFireAnimation, false);
 	}
+	if(WeaponShotShake)
+	{
+		UGameplayStatics::PlayWorldCameraShake(GetWorld(), WeaponShotShake, Character->GetActorLocation(), 0.f, 100.f);
+	}
 }
 
 void UWeaponComponent::Reload()
