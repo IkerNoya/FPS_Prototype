@@ -50,6 +50,9 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Movement")
 	EMovementState NextMovementState = EMovementState::Running;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Movement|Animation")
+	UAnimMontage* MantleAnimation;
+
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Effects")
 	TSubclassOf<UCameraShakeBase> LandingShake;
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Effects")

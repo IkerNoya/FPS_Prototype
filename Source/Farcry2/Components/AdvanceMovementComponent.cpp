@@ -175,6 +175,13 @@ bool UAdvanceMovementComponent::IsQuickMantle() const
 void UAdvanceMovementComponent::MantleStart()
 {
 	SetMovementState(EMovementState::Mantling);
+	if(auto* CharacterBase = Cast<ACharacterBase>(GetOwner()))
+	{
+		if(CharacterBase->GetMesh1P()->GetAnimInstance() && MantleAnimation)
+		{
+			CharacterBase->GetMesh1P()->GetAnimInstance()->PlaySlotAnimationAsDynamicMontage(MantleAnimation, "DefaultSlot");
+		}
+	}
 	PlayCameraShake(MantlingShake);
 	CharacterMovement->StopMovementImmediately();
 	CharacterMovement->DisableMovement();
