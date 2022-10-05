@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/AdvanceMovementComponent.h"
+#include "Components/HealthComponent.h"
 #include "Components/InteractionComponent.h"
 #include "Components/InventoryComponent.h"
 #include "GameFramework/Character.h"
@@ -35,6 +36,8 @@ protected:
 	UInventoryComponent* Inventory;
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Components | Custom")
 	UAdvanceMovementComponent* AdvanceMovementComponent;
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Components | Custom")
+	UHealthComponent* HealthComponent;
 	
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Camera")
 	float TurnRateGamepad;
@@ -98,6 +101,8 @@ protected:
 	void PlayCameraShake(TSubclassOf<UCameraShakeBase> Shake);
 	UFUNCTION(BlueprintImplementableEvent)
 	void HandleLeaning(float Angle);
+
+	virtual float TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator, AActor* DamageCauser) override;
 	
 public:	
 	UFUNCTION(BlueprintImplementableEvent)

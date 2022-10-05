@@ -43,6 +43,7 @@ ACharacterBase::ACharacterBase()
 	InteractionComponent = CreateDefaultSubobject<UInteractionComponent>(TEXT("InteractionComponent"));
 	Inventory = CreateDefaultSubobject<UInventoryComponent>(TEXT("InventoryComponent"));
 	AdvanceMovementComponent = CreateDefaultSubobject<UAdvanceMovementComponent>(TEXT("AdvanceMovementComponent"));
+	HealthComponent = CreateDefaultSubobject<UHealthComponent>(TEXT("Health Component"));
 }
 
 void ACharacterBase::BeginPlay()
@@ -254,6 +255,16 @@ void ACharacterBase::StopLeaning()
 {
 	bIsLeaning=false;
 	HandleLeaning(0);
+}
+
+float ACharacterBase::TakeDamage(float DamageAmount, FDamageEvent const& DamageEvent, AController* EventInstigator,
+	AActor* DamageCauser)
+{
+	if(HealthComponent)
+	{
+		HealthComponent->TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
+	}
+	return Super::TakeDamage(DamageAmount, DamageEvent, EventInstigator, DamageCauser);
 }
 
 void ACharacterBase::Tick(float DeltaTime)
